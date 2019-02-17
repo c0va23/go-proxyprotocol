@@ -57,60 +57,13 @@ func ParseV2Header(buf *bufio.Reader) (*Header, error) {
 			return nil, err
 		}
 
-		var header *Header
 		switch protocol & BinaryAFMask {
 		case BinaryProtocolUnspec:
 			return nil, nil
 		case BinaryAFInet:
-			if addressesLen != BinaryAddressLenIPv4 {
-				return nil, ErrUnexpectedAddressLen
-			}
-
-			srcIP := make(net.IP, net.IPv4len)
-			copy(srcIP, addressesBuf[0:net.IPv4len])
-
-			dstIP := make(net.IP, net.IPv4len)
-			copy(dstIP, addressesBuf[net.IPv4len:2*net.IPv4len])
-
-			srcPort := binary.BigEndian.Uint16(addressesBuf[2*net.IPv4len : 2*net.IPv4len+binaryPortSize])
-			dstPort := binary.BigEndian.Uint16(addressesBuf[2*net.IPv4len+binaryPortSize : 2*net.IPv4len+2*binaryPortSize])
-
-			header = &Header{
-				SrcAddr: &net.TCPAddr{
-					IP:   srcIP,
-					Port: int(srcPort),
-				},
-				DstAddr: &net.TCPAddr{
-					IP:   dstIP,
-					Port: int(dstPort),
-				},
-			}
-			return header, nil
+			return parseAddressData(addressesBuf, net.IPv4len)
 		case BinaryAFInet6:
-			if addressesLen != BinaryAddressLenIPv6 {
-				return nil, ErrUnexpectedAddressLen
-			}
-
-			srcIP := make(net.IP, net.IPv6len)
-			copy(srcIP, addressesBuf[0:net.IPv6len])
-
-			dstIP := make(net.IP, net.IPv6len)
-			copy(dstIP, addressesBuf[net.IPv6len:2*net.IPv6len])
-
-			srcPort := binary.BigEndian.Uint16(addressesBuf[2*net.IPv6len : 2*net.IPv6len+binaryPortSize])
-			dstPort := binary.BigEndian.Uint16(addressesBuf[2*net.IPv6len+binaryPortSize : 2*net.IPv6len+2*binaryPortSize])
-
-			header = &Header{
-				SrcAddr: &net.TCPAddr{
-					IP:   srcIP,
-					Port: int(srcPort),
-				},
-				DstAddr: &net.TCPAddr{
-					IP:   dstIP,
-					Port: int(dstPort),
-				},
-			}
-			return header, nil
+			return parseAddressData(addressesBuf, net.IPv6len)
 		default:
 			return nil, ErrUnknownProtocol
 		}
@@ -119,4 +72,36 @@ func ParseV2Header(buf *bufio.Reader) (*Header, error) {
 	default:
 		return nil, ErrUnknownCommand
 	}
+}
+
+func parseAddressData(addressesBuf []byte, IPLen int) (*Header, error) {
+	expectedBufSize := 2 * (IPLen + binaryPortSize)
+	if len(addressesBuf) != expectedBufSize {
+		return nil, ErrUnexpectedAddressLen
+	}
+
+	srcIP := make(net.IP, IPLen)
+	copy(srcIP, addressesBuf[:IPLen])
+	addressesBuf = addressesBuf[IPLen:]
+
+	dstIP := make(net.IP, IPLen)
+	copy(dstIP, addressesBuf[:IPLen])
+	addressesBuf = addressesBuf[IPLen:]
+
+	srcPort := binary.BigEndian.Uint16(addressesBuf[:binaryPortSize])
+	addressesBuf = addressesBuf[binaryPortSize:]
+
+	dstPort := binary.BigEndian.Uint16(addressesBuf[:binaryPortSize])
+
+	return &Header{
+		SrcAddr: &net.TCPAddr{
+			IP:   srcIP,
+			Port: int(srcPort),
+		},
+		DstAddr: &net.TCPAddr{
+			IP:   dstIP,
+			Port: int(dstPort),
+		},
+	}, nil
+
 }
