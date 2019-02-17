@@ -66,15 +66,16 @@ func (listener *Listener) parserHeader(readBuf *bufio.Reader) (*Header, error) {
 		header, err := headerParser(readBuf)
 		switch err {
 		case nil:
-			listener.log("Use raw remote addr")
+			listener.log("Use header remote addr")
 			return header, nil
 		case ErrInvalidSignature:
 			continue
 		default:
+			listener.log("Parse header error: %s", err)
 			return nil, err
 		}
 	}
-	listener.log("Use header remote addr")
+	listener.log("Use raw remote addr")
 	return nil, nil
 }
 
@@ -90,6 +91,7 @@ func (listener *Listener) Accept() (net.Conn, error) {
 	if listener.SourceCheck != nil {
 		trusted, err := listener.SourceCheck(rawConn.RemoteAddr())
 		if nil != err {
+			listener.log("Source check error: %s", err)
 			return nil, err
 		}
 		if !trusted {
