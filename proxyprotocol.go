@@ -3,10 +3,18 @@
 // Prorxyprotocol spec http://www.haproxy.org/download/2.0/doc/proxy-protocol.txt
 package proxyprotocol
 
-import "net"
+import (
+	"bufio"
+	"net"
+)
 
 // Header struct represent header parsing result
 type Header struct {
 	SrcAddr net.Addr
 	DstAddr net.Addr
 }
+
+// HeaderParser describe interface for header parsers
+type HeaderParser func(
+	readBuf *bufio.Reader,
+) (*Header, error)
