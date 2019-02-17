@@ -15,8 +15,8 @@ var (
 	ErrUnexpectedAddressLen = errors.New("Unexpected address length")
 )
 
-// ParseV2Header from incoming connection
-func ParseV2Header(buf *bufio.Reader) (*Header, error) {
+// ParseBinaryHeader from incoming connection
+func ParseBinaryHeader(buf *bufio.Reader) (*Header, error) {
 	magicBuf, err := buf.Peek(BinarySignatueLen)
 	if nil != err {
 		return nil, err

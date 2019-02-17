@@ -19,7 +19,7 @@ func NewListener(listener net.Listener, loggerFn LoggerFn) net.Listener {
 		loggerFn: loggerFn,
 		headerParsers: []HeaderParser{
 			ParseTextHeader,
-			ParseV2Header,
+			ParseBinaryHeader,
 		},
 	}
 }
