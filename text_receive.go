@@ -44,7 +44,7 @@ func ParseTextHeader(buf *bufio.Reader) (*Header, error) {
 	switch protocol {
 	case TextProtocolUnknown:
 		return nil, nil
-	case TextProtocolIPv4:
+	case TextProtocolIPv4, TextProtocolIPv6:
 		addressParts := headerParts[2:]
 		if textAddressPartsLen != len(addressParts) {
 			return nil, ErrInvalidAddressList

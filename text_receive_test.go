@@ -101,4 +101,56 @@ func TestParseTextHeader(t *testing.T) {
 			testParser(t, proxyprotocol.ParseTextHeader, &expectedHeader, nil, data)
 		})
 	})
+
+	t.Run("IPV6 protocol", func(t *testing.T) {
+		data := append(proxyprotocol.TextSignature, []byte(proxyprotocol.TextSeparator)...)
+		data = append(data, []byte(proxyprotocol.TextProtocolIPv6)...)
+
+		t.Run("invalid address parts", func(t *testing.T) {
+			data := buildTextHeader(data, "::1", "::2")
+			testParser(t, proxyprotocol.ParseTextHeader, nil, proxyprotocol.ErrInvalidAddressList, data)
+		})
+
+		t.Run("invalid src IP", func(t *testing.T) {
+			data := buildTextHeader(data, "::ZZ", "::2", "1080", "12345")
+			testParser(t, proxyprotocol.ParseTextHeader, nil, proxyprotocol.ErrInvalidIP, data)
+		})
+
+		t.Run("invalid src port", func(t *testing.T) {
+			data := buildTextHeader(data, "::1", "::2", "808080", "12345")
+			testParser(t, proxyprotocol.ParseTextHeader, nil, proxyprotocol.ErrInvalidPort, data)
+		})
+
+		t.Run("invalid dst IP", func(t *testing.T) {
+			data := buildTextHeader(data, "::1", "::ZZ", "1080", "12345")
+			testParser(t, proxyprotocol.ParseTextHeader, nil, proxyprotocol.ErrInvalidIP, data)
+		})
+
+		t.Run("invalid dst port", func(t *testing.T) {
+			data := buildTextHeader(data, "::1", "::2", "1080", "123456")
+			testParser(t, proxyprotocol.ParseTextHeader, nil, proxyprotocol.ErrInvalidPort, data)
+		})
+
+		t.Run("valid address", func(t *testing.T) {
+			srcAddr := net.ParseIP("::1")
+			dstAddr := net.ParseIP("::2")
+
+			srcPort := 12345
+			dstPort := 8080
+
+			expectedHeader := proxyprotocol.Header{
+				SrcAddr: &net.TCPAddr{
+					IP:   srcAddr,
+					Port: srcPort,
+				},
+				DstAddr: &net.TCPAddr{
+					IP:   dstAddr,
+					Port: dstPort,
+				},
+			}
+
+			data := buildTextHeader(data, srcAddr.String(), dstAddr.String(), strconv.Itoa(srcPort), strconv.Itoa(dstPort))
+			testParser(t, proxyprotocol.ParseTextHeader, &expectedHeader, nil, data)
+		})
+	})
 }
