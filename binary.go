@@ -1,9 +1,5 @@
 package proxyprotocol
 
-import (
-	"net"
-)
-
 // BinarySignatue is maigc prefix for proxyprtocol Binary
 var (
 	BinarySignatue    = []byte{0x0D, 0x0A, 0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A}
@@ -53,7 +49,10 @@ var (
 
 // Expected address length
 var (
-	binaryPortSize       = 2
-	BinaryAddressLenIPv4 = 2 * (net.IPv4len + binaryPortSize)
-	BinaryAddressLenIPv6 = 2 * (net.IPv6len + binaryPortSize)
+	BinaryPortLen = 2
+)
+
+// TLV types
+const (
+	TLVTypeNoop byte = 0x04
 )

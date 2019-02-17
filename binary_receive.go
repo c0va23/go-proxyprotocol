@@ -75,8 +75,8 @@ func ParseV2Header(buf *bufio.Reader) (*Header, error) {
 }
 
 func parseAddressData(addressesBuf []byte, IPLen int) (*Header, error) {
-	expectedBufSize := 2 * (IPLen + binaryPortSize)
-	if len(addressesBuf) != expectedBufSize {
+	expectedBufSize := 2 * (IPLen + BinaryPortLen)
+	if len(addressesBuf) < expectedBufSize {
 		return nil, ErrUnexpectedAddressLen
 	}
 
@@ -88,10 +88,11 @@ func parseAddressData(addressesBuf []byte, IPLen int) (*Header, error) {
 	copy(dstIP, addressesBuf[:IPLen])
 	addressesBuf = addressesBuf[IPLen:]
 
-	srcPort := binary.BigEndian.Uint16(addressesBuf[:binaryPortSize])
-	addressesBuf = addressesBuf[binaryPortSize:]
+	srcPort := binary.BigEndian.Uint16(addressesBuf[:BinaryPortLen])
+	addressesBuf = addressesBuf[BinaryPortLen:]
 
-	dstPort := binary.BigEndian.Uint16(addressesBuf[:binaryPortSize])
+	dstPort := binary.BigEndian.Uint16(addressesBuf[:BinaryPortLen])
+	addressesBuf = addressesBuf[BinaryPortLen:]
 
 	return &Header{
 		SrcAddr: &net.TCPAddr{

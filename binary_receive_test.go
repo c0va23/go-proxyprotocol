@@ -56,7 +56,8 @@ func TestParseV2Header(t *testing.T) {
 		})
 
 		t.Run("Valid address size", func(t *testing.T) {
-			data := append(data, 0, byte(proxyprotocol.BinaryAddressLenIPv4))
+			addressDataLen := 2 * (net.IPv4len + proxyprotocol.BinaryPortLen)
+			data := append(data, 0, byte(addressDataLen))
 
 			t.Run("Invalid address data size", func(t *testing.T) {
 				testParser(t, proxyprotocol.ParseV2Header, nil, io.EOF, data)
@@ -104,7 +105,8 @@ func TestParseV2Header(t *testing.T) {
 		})
 
 		t.Run("Valid address size", func(t *testing.T) {
-			data := append(data, 0, byte(proxyprotocol.BinaryAddressLenIPv6))
+			addressDataLen := 2 * (net.IPv6len + proxyprotocol.BinaryPortLen)
+			data := append(data, 0, byte(addressDataLen))
 
 			t.Run("Invalid address data size", func(t *testing.T) {
 				testParser(t, proxyprotocol.ParseV2Header, nil, io.EOF, data)
@@ -137,6 +139,45 @@ func TestParseV2Header(t *testing.T) {
 				data = append(data, dstAddr...)
 				data = append(data, srcPortBuf...)
 				data = append(data, dstPortBuf...)
+				testParser(t, proxyprotocol.ParseV2Header, &expectedHeader, nil, data)
+			})
+		})
+
+		t.Run("address data with TLV", func(t *testing.T) {
+			tlvTypeLen := 1
+			tlvLengthLen := 2
+			tlvLen := tlvTypeLen + tlvLengthLen
+			dataLen := 2 * (net.IPv6len + proxyprotocol.BinaryPortLen)
+			data := append(data, 0, byte(dataLen+tlvLen))
+
+			t.Run("address data with TLV data", func(t *testing.T) {
+				srcAddr := net.ParseIP("::1")
+				dstAddr := net.ParseIP("::2")
+
+				srcPort := 12345
+				dstPort := 8080
+
+				srcPortBuf := make([]byte, 2)
+				dstPortBuf := make([]byte, 2)
+
+				binary.BigEndian.PutUint16(srcPortBuf, uint16(srcPort))
+				binary.BigEndian.PutUint16(dstPortBuf, uint16(dstPort))
+
+				expectedHeader := proxyprotocol.Header{
+					SrcAddr: &net.TCPAddr{
+						IP:   srcAddr,
+						Port: srcPort,
+					},
+					DstAddr: &net.TCPAddr{
+						IP:   dstAddr,
+						Port: dstPort,
+					},
+				}
+				data := append(data, srcAddr...)
+				data = append(data, dstAddr...)
+				data = append(data, srcPortBuf...)
+				data = append(data, dstPortBuf...)
+				data = append(data, proxyprotocol.TLVTypeNoop, 0, 0)
 				testParser(t, proxyprotocol.ParseV2Header, &expectedHeader, nil, data)
 			})
 		})
