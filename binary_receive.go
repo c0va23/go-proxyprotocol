@@ -15,6 +15,14 @@ var (
 	ErrUnexpectedAddressLen = errors.New("Unexpected address length")
 )
 
+// Meta buffer byte positoin
+const (
+	versionCommandPos  = 0
+	protocolPos        = 1
+	addressLenStartPos = 2
+	addressLenEndPos   = 4
+)
+
 // ParseBinaryHeader from incoming connection
 func ParseBinaryHeader(buf *bufio.Reader) (*Header, error) {
 	magicBuf, err := buf.Peek(BinarySignatueLen)
@@ -28,10 +36,12 @@ func ParseBinaryHeader(buf *bufio.Reader) (*Header, error) {
 
 	buf.Discard(BinarySignatueLen)
 
-	versionCommandByte, err := buf.ReadByte()
-	if nil != err {
+	metaBuf := make([]byte, addressLenEndPos)
+	if _, err = buf.Read(metaBuf); nil != err {
 		return nil, err
 	}
+
+	versionCommandByte := metaBuf[versionCommandPos]
 
 	if versionCommandByte&BinaryVersionMask != BinaryVersion2 {
 		return nil, ErrUnknownVersion
@@ -39,16 +49,9 @@ func ParseBinaryHeader(buf *bufio.Reader) (*Header, error) {
 
 	switch versionCommandByte & BinaryCommandMask {
 	case BinaryCommandProxy:
-		protocol, err := buf.ReadByte()
-		if nil != err {
-			return nil, err
-		}
+		protocol := metaBuf[protocolPos]
 
-		addressSizeBuf := make([]byte, 2)
-		_, err = buf.Read(addressSizeBuf)
-		if nil != err {
-			return nil, err
-		}
+		addressSizeBuf := metaBuf[addressLenStartPos:addressLenEndPos]
 		addressesLen := int(binary.BigEndian.Uint16(addressSizeBuf))
 
 		addressesBuf := make([]byte, addressesLen)

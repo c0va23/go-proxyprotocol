@@ -20,6 +20,11 @@ func TestParseV2Header(t *testing.T) {
 		testParser(t, proxyprotocol.ParseBinaryHeader, nil, proxyprotocol.ErrInvalidSignature, data)
 	})
 
+	t.Run("meta EOF", func(t *testing.T) {
+		data := append(proxyprotocol.BinarySignatue)
+		testParser(t, proxyprotocol.ParseBinaryHeader, nil, io.EOF, data)
+	})
+
 	t.Run("Invalid version", func(t *testing.T) {
 		invalidVersoin := byte(0x00)
 		data := append(proxyprotocol.BinarySignatue, invalidVersoin)
