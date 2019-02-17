@@ -10,10 +10,8 @@ import (
 
 // Errors
 var (
-	ErrInvalidSignature     = errors.New("Invalid signature")
 	ErrUnknownVersion       = errors.New("Unknown version")
 	ErrUnknownCommand       = errors.New("Unknown command")
-	ErrUnknownProtocol      = errors.New("Unknown protocol")
 	ErrUnexpectedAddressLen = errors.New("Unexpected address length")
 )
 

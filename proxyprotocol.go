@@ -5,6 +5,7 @@ package proxyprotocol
 
 import (
 	"bufio"
+	"errors"
 	"net"
 )
 
@@ -18,3 +19,9 @@ type Header struct {
 type HeaderParser func(
 	readBuf *bufio.Reader,
 ) (*Header, error)
+
+// Shared HeaderParser errors
+var (
+	ErrInvalidSignature = errors.New("Invalid signature")
+	ErrUnknownProtocol  = errors.New("Unknown protocol")
+)
