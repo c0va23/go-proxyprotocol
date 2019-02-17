@@ -11,6 +11,9 @@ const bufferSize = 1400
 // LoggerFn type of logger function
 type LoggerFn func(string, ...interface{})
 
+// SourceChecker check trusted address
+type SourceChecker func(net.Addr) (bool, error)
+
 // NewListener create new proxyprocol.Listener from any net.Listener.
 func NewListener(listener net.Listener) *Listener {
 	return &Listener{
@@ -27,6 +30,7 @@ type Listener struct {
 	Listener      net.Listener
 	LoggerFn      LoggerFn
 	HeaderParsers []HeaderParser
+	SourceCheck   SourceChecker
 }
 
 func (listener *Listener) log(str string, args ...interface{}) {
@@ -47,6 +51,13 @@ func (listener *Listener) WithLogger(loggerFn LoggerFn) *Listener {
 func (listener *Listener) WithHeaderParsers(headerParser ...HeaderParser) *Listener {
 	newListener := *listener
 	newListener.HeaderParsers = headerParser
+	return &newListener
+}
+
+// WithSourceChecker copy Listener and set SourceChecker
+func (listener *Listener) WithSourceChecker(sourceChecker SourceChecker) *Listener {
+	newListener := *listener
+	newListener.SourceCheck = sourceChecker
 	return &newListener
 }
 
@@ -74,6 +85,16 @@ func (listener *Listener) Accept() (net.Conn, error) {
 	rawConn, err := listener.Listener.Accept()
 	if nil != err {
 		return nil, err
+	}
+
+	if listener.SourceCheck != nil {
+		trusted, err := listener.SourceCheck(rawConn.RemoteAddr())
+		if nil != err {
+			return nil, err
+		}
+		if !trusted {
+			return rawConn, nil
+		}
 	}
 
 	readBuf := bufio.NewReaderSize(rawConn, bufferSize)
