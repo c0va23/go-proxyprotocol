@@ -86,6 +86,31 @@ func ParseV2Header(buf *bufio.Reader) (*Header, error) {
 				},
 			}
 			return header, nil
+		case BinaryAFInet6:
+			if addressesLen != BinaryAddressLenIPv6 {
+				return nil, ErrUnexpectedAddressLen
+			}
+
+			srcIP := make(net.IP, net.IPv6len)
+			copy(srcIP, addressesBuf[0:net.IPv6len])
+
+			dstIP := make(net.IP, net.IPv6len)
+			copy(dstIP, addressesBuf[net.IPv6len:2*net.IPv6len])
+
+			srcPort := binary.BigEndian.Uint16(addressesBuf[2*net.IPv6len : 2*net.IPv6len+binaryPortSize])
+			dstPort := binary.BigEndian.Uint16(addressesBuf[2*net.IPv6len+binaryPortSize : 2*net.IPv6len+2*binaryPortSize])
+
+			header = &Header{
+				SrcAddr: &net.TCPAddr{
+					IP:   srcIP,
+					Port: int(srcPort),
+				},
+				DstAddr: &net.TCPAddr{
+					IP:   dstIP,
+					Port: int(dstPort),
+				},
+			}
+			return header, nil
 		default:
 			return nil, ErrUnknownProtocol
 		}

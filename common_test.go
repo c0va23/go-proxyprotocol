@@ -20,9 +20,9 @@ func testParser(
 	header, err := headerParser(buf)
 
 	if !reflect.DeepEqual(expectedHeader, header) {
-		t.Errorf("Invalid header. Expected %v, got %v", expectedHeader, header)
+		t.Errorf("Invalid header. Expected %+#v, got %+#v", expectedHeader, header)
 	}
 	if expextedError != err {
-		t.Errorf("Invalid error: %v", err)
+		t.Errorf("Invalid error. Expected %v, got %v", expextedError, err)
 	}
 }

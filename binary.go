@@ -55,4 +55,5 @@ var (
 var (
 	binaryPortSize       = 2
 	BinaryAddressLenIPv4 = 2 * (net.IPv4len + binaryPortSize)
+	BinaryAddressLenIPv6 = 2 * (net.IPv6len + binaryPortSize)
 )
