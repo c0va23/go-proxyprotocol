@@ -12,12 +12,10 @@ const bufferSize = 1400
 type LoggerFn func(string, ...interface{})
 
 // NewListener create new proxyprocol.Listener from any net.Listener.
-// If loggerFn not nil, then enabled debug mode.
-func NewListener(listener net.Listener, loggerFn LoggerFn) net.Listener {
+func NewListener(listener net.Listener) *Listener {
 	return &Listener{
-		listener: listener,
-		loggerFn: loggerFn,
-		headerParsers: []HeaderParser{
+		Listener: listener,
+		HeaderParsers: []HeaderParser{
 			ParseTextHeader,
 			ParseBinaryHeader,
 		},
@@ -26,47 +24,63 @@ func NewListener(listener net.Listener, loggerFn LoggerFn) net.Listener {
 
 // Listener implement net.Listener
 type Listener struct {
-	listener      net.Listener
-	loggerFn      LoggerFn
-	headerParsers []HeaderParser
+	Listener      net.Listener
+	LoggerFn      LoggerFn
+	HeaderParsers []HeaderParser
 }
 
 func (listener *Listener) log(str string, args ...interface{}) {
-	if nil != listener.loggerFn {
-		listener.loggerFn(str, args...)
+	if nil != listener.LoggerFn {
+		listener.LoggerFn(str, args...)
 	}
 }
 
-// Accept implement net.Listener.Accept().
-// If request have proxyprotocol header, then wrap connection into proxyprotocol.Conn.
-// Otherwise return raw net.Conn.
-func (listener *Listener) Accept() (net.Conn, error) {
-	rawConn, err := listener.listener.Accept()
-	if nil != err {
-		return nil, err
-	}
+// WithLogger copy Listener and set LoggerFn
+func (listener *Listener) WithLogger(loggerFn LoggerFn) *Listener {
+	newListener := *listener
+	newListener.LoggerFn = loggerFn
+	return &newListener
+}
 
-	readBuf := bufio.NewReaderSize(rawConn, bufferSize)
+// WithHeaderParsers copy Listener and set HeaderParser.
+// Can be used to disable or reorder HeaderParser's.
+func (listener *Listener) WithHeaderParsers(headerParser ...HeaderParser) *Listener {
+	newListener := *listener
+	newListener.HeaderParsers = headerParser
+	return &newListener
+}
 
-	var header *Header
-
-parserLoop:
-	for _, headerParser := range listener.headerParsers {
-		header, err = headerParser(readBuf)
+func (listener *Listener) parserHeader(readBuf *bufio.Reader) (*Header, error) {
+	for _, headerParser := range listener.HeaderParsers {
+		header, err := headerParser(readBuf)
 		switch err {
 		case nil:
-			break parserLoop
+			listener.log("Use raw remote addr")
+			return header, nil
 		case ErrInvalidSignature:
 			continue
 		default:
 			return nil, err
 		}
 	}
+	listener.log("Use header remote addr")
+	return nil, nil
+}
 
-	if header == nil {
-		listener.log("Use raw remote addr")
-	} else {
-		listener.log("Use header remote addr")
+// Accept implement net.Listener.Accept().
+// If request have proxyprotocol header, then wrap connection into proxyprotocol.Conn.
+// Otherwise return raw net.Conn.
+func (listener *Listener) Accept() (net.Conn, error) {
+	rawConn, err := listener.Listener.Accept()
+	if nil != err {
+		return nil, err
+	}
+
+	readBuf := bufio.NewReaderSize(rawConn, bufferSize)
+
+	header, err := listener.parserHeader(readBuf)
+	if nil != err {
+		return nil, err
 	}
 
 	return NewConn(rawConn, readBuf, header), nil
@@ -74,12 +88,12 @@ parserLoop:
 
 // Close is proxy to listener.Close()
 func (listener *Listener) Close() error {
-	return listener.listener.Close()
+	return listener.Listener.Close()
 }
 
 // Addr is proxy to listener.Addr()
 func (listener Listener) Addr() net.Addr {
-	return listener.listener.Addr()
+	return listener.Listener.Addr()
 }
 
 // Conn is wrapper on net.Conn with overrided RemoteAddr()
