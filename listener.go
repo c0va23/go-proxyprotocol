@@ -8,16 +8,28 @@ import (
 
 const bufferSize = 1400
 
-// NewListener create new proxyprocol.Listener from any net.Listener
-func NewListener(listener net.Listener) net.Listener {
+// LoggerFn type of logger function
+type LoggerFn func(string, ...interface{})
+
+// NewListener create new proxyprocol.Listener from any net.Listener.
+// If loggerFn not nil, then enabled debug mode.
+func NewListener(listener net.Listener, loggerFn LoggerFn) net.Listener {
 	return &Listener{
 		listener: listener,
+		loggerFn: loggerFn,
 	}
 }
 
 // Listener implement net.Listener
 type Listener struct {
 	listener net.Listener
+	loggerFn LoggerFn
+}
+
+func (listener *Listener) log(str string, args ...interface{}) {
+	if nil != listener.loggerFn {
+		listener.loggerFn(str, args...)
+	}
 }
 
 // Accept implement net.Listener.Accept().
@@ -31,10 +43,18 @@ func (listener *Listener) Accept() (net.Conn, error) {
 
 	readBuf := bufio.NewReaderSize(rawConn, bufferSize)
 
+	listener.log("Start parse V2 header")
 	header, err := ParseV2Header(readBuf)
+	listener.log("End parse V2 header")
 
 	if err != nil && err != ErrInvalidSignature {
 		return nil, err
+	}
+
+	if err == ErrInvalidSignature {
+		listener.log("Use raw remote addr")
+	} else {
+		listener.log("Use header remote addr")
 	}
 
 	return NewConn(rawConn, readBuf, header), nil
