@@ -2,12 +2,17 @@ package proxyprotocol
 
 // TextSignature is prefix for proxyprotocol v1
 var (
-	TextSignature    = []byte("PROXY")
-	TextSignatureLen = len(TextSignature)
-	TextSeparator    = " "
-	TextCR           = byte('\r')
-	TextLF           = byte('\n')
-	TextCRLF         = []byte{TextCR, TextLF}
+	TextSignature = []byte("PROXY")
+	TextSeparator = " "
+	TextCR        = byte('\r')
+	TextLF        = byte('\n')
+	TextCRLF      = []byte{TextCR, TextLF}
+)
+
+var (
+	textSignatureLen    = len(TextSignature)
+	textAddressPartsLen = 4
+	textPortBitSize     = 16
 )
 
 // TextProtocol list
