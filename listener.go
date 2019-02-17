@@ -17,13 +17,18 @@ func NewListener(listener net.Listener, loggerFn LoggerFn) net.Listener {
 	return &Listener{
 		listener: listener,
 		loggerFn: loggerFn,
+		headerParsers: []HeaderParser{
+			ParseTextHeader,
+			ParseV2Header,
+		},
 	}
 }
 
 // Listener implement net.Listener
 type Listener struct {
-	listener net.Listener
-	loggerFn LoggerFn
+	listener      net.Listener
+	loggerFn      LoggerFn
+	headerParsers []HeaderParser
 }
 
 func (listener *Listener) log(str string, args ...interface{}) {
@@ -43,15 +48,22 @@ func (listener *Listener) Accept() (net.Conn, error) {
 
 	readBuf := bufio.NewReaderSize(rawConn, bufferSize)
 
-	listener.log("Start parse V2 header")
-	header, err := ParseV2Header(readBuf)
-	listener.log("End parse V2 header")
+	var header *Header
 
-	if err != nil && err != ErrInvalidSignature {
-		return nil, err
+parserLoop:
+	for _, headerParser := range listener.headerParsers {
+		header, err = headerParser(readBuf)
+		switch err {
+		case nil:
+			break parserLoop
+		case ErrInvalidSignature:
+			continue
+		default:
+			return nil, err
+		}
 	}
 
-	if err == ErrInvalidSignature {
+	if header == nil {
 		listener.log("Use raw remote addr")
 	} else {
 		listener.log("Use header remote addr")
