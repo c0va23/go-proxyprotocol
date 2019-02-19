@@ -3,6 +3,7 @@ package proxyprotocol_test
 import (
 	"bufio"
 	"bytes"
+	"io"
 	"reflect"
 	"testing"
 
@@ -14,6 +15,7 @@ type testParserArgs struct {
 	data         []byte
 	header       *proxyprotocol.Header
 	err          error
+	readAll      bool
 }
 
 func testParser(
@@ -28,5 +30,8 @@ func testParser(
 	}
 	if args.err != err {
 		t.Errorf("Invalid error. Expected %v, got %v", args.err, err)
+	}
+	if _, err := buf.Peek(1); args.readAll && err != io.EOF {
+		t.Errorf("Buffer not readed")
 	}
 }

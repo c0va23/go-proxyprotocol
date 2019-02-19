@@ -67,6 +67,7 @@ func TestParseV2Header(t *testing.T) {
 			data:         data,
 			header:       nil,
 			err:          nil,
+			readAll:      true,
 		})
 	})
 
@@ -78,6 +79,7 @@ func TestParseV2Header(t *testing.T) {
 			headerParser: proxyprotocol.ParseBinaryHeader,
 			data:         data,
 			err:          proxyprotocol.ErrUnknownProtocol,
+			readAll:      true,
 		})
 	})
 
@@ -89,6 +91,7 @@ func TestParseV2Header(t *testing.T) {
 			data:         data,
 			header:       nil,
 			err:          nil,
+			readAll:      true,
 		})
 	})
 
@@ -102,6 +105,7 @@ func TestParseV2Header(t *testing.T) {
 				headerParser: proxyprotocol.ParseBinaryHeader,
 				data:         data,
 				err:          proxyprotocol.ErrUnexpectedAddressLen,
+				readAll:      true,
 			})
 		})
 
@@ -114,6 +118,7 @@ func TestParseV2Header(t *testing.T) {
 					headerParser: proxyprotocol.ParseBinaryHeader,
 					data:         data,
 					err:          io.EOF,
+					readAll:      true,
 				})
 			})
 
@@ -148,6 +153,7 @@ func TestParseV2Header(t *testing.T) {
 					headerParser: proxyprotocol.ParseBinaryHeader,
 					data:         data,
 					header:       &expectedHeader,
+					readAll:      true,
 				})
 			})
 		})
@@ -163,6 +169,7 @@ func TestParseV2Header(t *testing.T) {
 				headerParser: proxyprotocol.ParseBinaryHeader,
 				data:         data,
 				err:          proxyprotocol.ErrUnexpectedAddressLen,
+				readAll:      true,
 			})
 		})
 
@@ -175,6 +182,7 @@ func TestParseV2Header(t *testing.T) {
 					headerParser: proxyprotocol.ParseBinaryHeader,
 					data:         data,
 					err:          io.EOF,
+					readAll:      true,
 				})
 			})
 
@@ -209,6 +217,7 @@ func TestParseV2Header(t *testing.T) {
 					headerParser: proxyprotocol.ParseBinaryHeader,
 					data:         data,
 					header:       &expectedHeader,
+					readAll:      true,
 				})
 			})
 		})
@@ -252,6 +261,7 @@ func TestParseV2Header(t *testing.T) {
 					headerParser: proxyprotocol.ParseBinaryHeader,
 					data:         data,
 					header:       &expectedHeader,
+					readAll:      true,
 				})
 			})
 		})
