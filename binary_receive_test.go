@@ -71,6 +71,30 @@ func TestParseV2Header(t *testing.T) {
 		})
 	})
 
+	t.Run("Local command with TLV", func(t *testing.T) {
+		commandVerison := proxyprotocol.BinaryCommandLocal | proxyprotocol.BinaryVersion2
+		protocol := proxyprotocol.BinaryProtocolUnspec
+
+		tlvData := []byte{proxyprotocol.TLVTypeNoop, 0, 0}
+
+		addressLen := make([]byte, 2)
+		binary.BigEndian.PutUint16(addressLen, uint16(len(tlvData)))
+
+		t.Logf("Address len: %v", addressLen)
+
+		data := append(proxyprotocol.BinarySignatue, commandVerison, protocol)
+		data = append(data, addressLen...)
+		data = append(data, tlvData...)
+
+		testParser(t, testParserArgs{
+			headerParser: proxyprotocol.ParseBinaryHeader,
+			data:         data,
+			header:       nil,
+			err:          nil,
+			readAll:      true,
+		})
+	})
+
 	t.Run("Invalid protocol", func(t *testing.T) {
 		commandVerison := proxyprotocol.BinaryCommandProxy | proxyprotocol.BinaryVersion2
 		invalidProtocol := byte(0xFF)

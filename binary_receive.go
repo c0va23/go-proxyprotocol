@@ -47,18 +47,18 @@ func ParseBinaryHeader(buf *bufio.Reader) (*Header, error) {
 		return nil, ErrUnknownVersion
 	}
 
+	addressSizeBuf := metaBuf[addressLenStartPos:addressLenEndPos]
+	addressesLen := int(binary.BigEndian.Uint16(addressSizeBuf))
+
+	addressesBuf := make([]byte, addressesLen)
+	_, err = buf.Read(addressesBuf)
+	if nil != err {
+		return nil, err
+	}
+
 	switch versionCommandByte & BinaryCommandMask {
 	case BinaryCommandProxy:
 		protocol := metaBuf[protocolPos]
-
-		addressSizeBuf := metaBuf[addressLenStartPos:addressLenEndPos]
-		addressesLen := int(binary.BigEndian.Uint16(addressSizeBuf))
-
-		addressesBuf := make([]byte, addressesLen)
-		_, err = buf.Read(addressesBuf)
-		if nil != err {
-			return nil, err
-		}
 
 		switch protocol & BinaryAFMask {
 		case BinaryProtocolUnspec:
