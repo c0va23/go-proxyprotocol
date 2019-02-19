@@ -9,20 +9,24 @@ import (
 	proxyprotocol "github.com/c0va23/go-proxyprotocol"
 )
 
+type testParserArgs struct {
+	headerParser proxyprotocol.HeaderParser
+	data         []byte
+	header       *proxyprotocol.Header
+	err          error
+}
+
 func testParser(
 	t *testing.T,
-	headerParser proxyprotocol.HeaderParser,
-	expectedHeader *proxyprotocol.Header,
-	expextedError error,
-	data []byte,
+	args testParserArgs,
 ) {
-	buf := bufio.NewReader(bytes.NewBuffer(data))
-	header, err := headerParser(buf)
+	buf := bufio.NewReader(bytes.NewBuffer(args.data))
+	header, err := args.headerParser(buf)
 
-	if !reflect.DeepEqual(expectedHeader, header) {
-		t.Errorf("Invalid header. Expected %+v, got %+v", expectedHeader, header)
+	if !reflect.DeepEqual(args.header, header) {
+		t.Errorf("Invalid header. Expected %+v, got %+v", args.header, header)
 	}
-	if expextedError != err {
-		t.Errorf("Invalid error. Expected %v, got %v", expextedError, err)
+	if args.err != err {
+		t.Errorf("Invalid error. Expected %v, got %v", args.err, err)
 	}
 }
