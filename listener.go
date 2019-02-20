@@ -3,6 +3,7 @@ package proxyprotocol
 import (
 	"bufio"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -61,24 +62,6 @@ func (listener *Listener) WithSourceChecker(sourceChecker SourceChecker) *Listen
 	return &newListener
 }
 
-func (listener *Listener) parserHeader(readBuf *bufio.Reader) (*Header, error) {
-	for _, headerParser := range listener.HeaderParsers {
-		header, err := headerParser(readBuf, listener.log)
-		switch err {
-		case nil:
-			listener.log("Use header remote addr")
-			return header, nil
-		case ErrInvalidSignature:
-			continue
-		default:
-			listener.log("Parse header error: %s", err)
-			return nil, err
-		}
-	}
-	listener.log("Use raw remote addr")
-	return nil, nil
-}
-
 // Accept implement net.Listener.Accept().
 // If request have proxyprotocol header, then wrap connection into proxyprotocol.Conn.
 // Otherwise return raw net.Conn.
@@ -99,14 +82,7 @@ func (listener *Listener) Accept() (net.Conn, error) {
 		}
 	}
 
-	readBuf := bufio.NewReaderSize(rawConn, bufferSize)
-
-	header, err := listener.parserHeader(readBuf)
-	if nil != err {
-		return nil, err
-	}
-
-	return NewConn(rawConn, readBuf, header), nil
+	return NewConn(rawConn, listener.log, listener.HeaderParsers), nil
 }
 
 // Close is proxy to listener.Close()
@@ -121,23 +97,52 @@ func (listener Listener) Addr() net.Addr {
 
 // Conn is wrapper on net.Conn with overrided RemoteAddr()
 type Conn struct {
-	conn    net.Conn
-	readBuf *bufio.Reader
-	header  *Header
+	conn          net.Conn
+	logf          LoggerFn
+	readBuf       *bufio.Reader
+	header        *Header
+	headerParsers []HeaderParser
+	once          sync.Once
 }
 
 // NewConn create wrapper on net.Conn.
 // If proxyprtocol header is local, when header should be nil.
-func NewConn(conn net.Conn, readBuf *bufio.Reader, header *Header) net.Conn {
+func NewConn(
+	conn net.Conn,
+	logf LoggerFn,
+	headerParsers []HeaderParser,
+) net.Conn {
+	readBuf := bufio.NewReaderSize(conn, bufferSize)
+
 	return &Conn{
-		conn:    conn,
-		readBuf: readBuf,
-		header:  header,
+		conn:          conn,
+		readBuf:       readBuf,
+		logf:          logf,
+		headerParsers: headerParsers,
 	}
+}
+
+func (conn *Conn) parserHeader() {
+	for _, headerParser := range conn.headerParsers {
+		header, err := headerParser(conn.readBuf, conn.logf)
+		switch err {
+		case nil:
+			conn.logf("Use header remote addr")
+			conn.header = header
+			return
+		case ErrInvalidSignature:
+			continue
+		default:
+			conn.logf("Parse header error: %s", err)
+			return
+		}
+	}
+	conn.logf("Use raw remote addr")
 }
 
 // Read proxy to conn.Read
 func (conn *Conn) Read(buf []byte) (int, error) {
+	conn.once.Do(conn.parserHeader)
 	return conn.readBuf.Read(buf)
 }
 
@@ -159,6 +164,7 @@ func (conn *Conn) LocalAddr() net.Addr {
 // RemoteAddr return addr of remote client.
 // If proxyprtocol not local, then return src from header.
 func (conn *Conn) RemoteAddr() net.Addr {
+	conn.once.Do(conn.parserHeader)
 	if nil != conn.header {
 		return conn.header.SrcAddr
 	}
