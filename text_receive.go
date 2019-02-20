@@ -17,9 +17,10 @@ var (
 )
 
 // ParseTextHeader try parse proxyprotocol header.
-func ParseTextHeader(buf *bufio.Reader) (*Header, error) {
+func ParseTextHeader(buf *bufio.Reader, logf LoggerFn) (*Header, error) {
 	signatureBuf, err := buf.Peek(textSignatureLen)
 	if nil != err {
+		logf("Read text signature error: %s", err)
 		return nil, err
 	}
 
@@ -29,6 +30,7 @@ func ParseTextHeader(buf *bufio.Reader) (*Header, error) {
 
 	headerLine, err := buf.ReadString(TextLF)
 	if nil != err {
+		logf("Read header line error: %s", err)
 		return nil, err
 	}
 

@@ -24,9 +24,10 @@ const (
 )
 
 // ParseBinaryHeader from incoming connection
-func ParseBinaryHeader(buf *bufio.Reader) (*Header, error) {
+func ParseBinaryHeader(buf *bufio.Reader, logf LoggerFn) (*Header, error) {
 	magicBuf, err := buf.Peek(BinarySignatueLen)
 	if nil != err {
+		logf("Read magif prefix error: %s", err)
 		return nil, err
 	}
 
@@ -38,6 +39,7 @@ func ParseBinaryHeader(buf *bufio.Reader) (*Header, error) {
 
 	metaBuf := make([]byte, addressLenEndPos)
 	if _, err = buf.Read(metaBuf); nil != err {
+		logf("Read meta error: %s", err)
 		return nil, err
 	}
 
@@ -49,12 +51,15 @@ func ParseBinaryHeader(buf *bufio.Reader) (*Header, error) {
 
 	addressSizeBuf := metaBuf[addressLenStartPos:addressLenEndPos]
 	addressesLen := int(binary.BigEndian.Uint16(addressSizeBuf))
+	logf("Addresses len: %d", addressesLen)
 
 	addressesBuf := make([]byte, addressesLen)
-	_, err = buf.Read(addressesBuf)
+	addressReaded, err := buf.Read(addressesBuf)
 	if nil != err {
+		logf("Read address error: %s", err)
 		return nil, err
 	}
+	logf("Address readed: %d", addressReaded)
 
 	switch versionCommandByte & BinaryCommandMask {
 	case BinaryCommandProxy:

@@ -63,7 +63,7 @@ func (listener *Listener) WithSourceChecker(sourceChecker SourceChecker) *Listen
 
 func (listener *Listener) parserHeader(readBuf *bufio.Reader) (*Header, error) {
 	for _, headerParser := range listener.HeaderParsers {
-		header, err := headerParser(readBuf)
+		header, err := headerParser(readBuf, listener.log)
 		switch err {
 		case nil:
 			listener.log("Use header remote addr")

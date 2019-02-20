@@ -18,6 +18,7 @@ type Header struct {
 // HeaderParser describe interface for header parsers
 type HeaderParser func(
 	readBuf *bufio.Reader,
+	logf LoggerFn,
 ) (*Header, error)
 
 // Shared HeaderParser errors

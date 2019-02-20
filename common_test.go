@@ -23,7 +23,7 @@ func testParser(
 	args testParserArgs,
 ) {
 	buf := bufio.NewReader(bytes.NewBuffer(args.data))
-	header, err := args.headerParser(buf)
+	header, err := args.headerParser(buf, t.Logf)
 
 	if !reflect.DeepEqual(args.header, header) {
 		t.Errorf("Invalid header. Expected %+v, got %+v", args.header, header)
