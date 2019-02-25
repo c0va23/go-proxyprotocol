@@ -18,20 +18,17 @@ type SourceChecker func(net.Addr) (bool, error)
 // NewListener create new proxyprocol.Listener from any net.Listener.
 func NewListener(listener net.Listener) *Listener {
 	return &Listener{
-		Listener: listener,
-		HeaderParsers: []HeaderParser{
-			ParseTextHeader,
-			ParseBinaryHeader,
-		},
+		Listener:            listener,
+		HeaderParserBuilder: DefaultFallbackHeaderParserBuilder(),
 	}
 }
 
 // Listener implement net.Listener
 type Listener struct {
-	Listener      net.Listener
-	LoggerFn      LoggerFn
-	HeaderParsers []HeaderParser
-	SourceCheck   SourceChecker
+	net.Listener
+	LoggerFn
+	HeaderParserBuilder
+	SourceChecker
 }
 
 func (listener *Listener) log(str string, args ...interface{}) {
@@ -47,18 +44,20 @@ func (listener *Listener) WithLogger(loggerFn LoggerFn) *Listener {
 	return &newListener
 }
 
-// WithHeaderParsers copy Listener and set HeaderParser.
+// WithHeaderParserBuilder copy Listener and set HeaderParserBuilder.
 // Can be used to disable or reorder HeaderParser's.
-func (listener *Listener) WithHeaderParsers(headerParser ...HeaderParser) *Listener {
+func (listener *Listener) WithHeaderParserBuilder(
+	headerParserBuilder HeaderParserBuilder,
+) *Listener {
 	newListener := *listener
-	newListener.HeaderParsers = headerParser
+	newListener.HeaderParserBuilder = headerParserBuilder
 	return &newListener
 }
 
 // WithSourceChecker copy Listener and set SourceChecker
 func (listener *Listener) WithSourceChecker(sourceChecker SourceChecker) *Listener {
 	newListener := *listener
-	newListener.SourceCheck = sourceChecker
+	newListener.SourceChecker = sourceChecker
 	return &newListener
 }
 
@@ -71,8 +70,8 @@ func (listener *Listener) Accept() (net.Conn, error) {
 		return nil, err
 	}
 
-	if listener.SourceCheck != nil {
-		trusted, err := listener.SourceCheck(rawConn.RemoteAddr())
+	if listener.SourceChecker != nil {
+		trusted, err := listener.SourceChecker(rawConn.RemoteAddr())
 		if nil != err {
 			listener.log("Source check error: %s", err)
 			return nil, err
@@ -82,7 +81,9 @@ func (listener *Listener) Accept() (net.Conn, error) {
 		}
 	}
 
-	return NewConn(rawConn, listener.log, listener.HeaderParsers), nil
+	headerParser := listener.HeaderParserBuilder.Build(listener.log)
+
+	return NewConn(rawConn, listener.log, headerParser), nil
 }
 
 // Close is proxy to listener.Close()
@@ -97,12 +98,12 @@ func (listener Listener) Addr() net.Addr {
 
 // Conn is wrapper on net.Conn with overrided RemoteAddr()
 type Conn struct {
-	conn          net.Conn
-	logf          LoggerFn
-	readBuf       *bufio.Reader
-	header        *Header
-	headerParsers []HeaderParser
-	once          sync.Once
+	conn         net.Conn
+	logf         LoggerFn
+	readBuf      *bufio.Reader
+	header       *Header
+	headerParser HeaderParser
+	once         sync.Once
 }
 
 // NewConn create wrapper on net.Conn.
@@ -110,39 +111,27 @@ type Conn struct {
 func NewConn(
 	conn net.Conn,
 	logf LoggerFn,
-	headerParsers []HeaderParser,
+	headerParser HeaderParser,
 ) net.Conn {
 	readBuf := bufio.NewReaderSize(conn, bufferSize)
 
 	return &Conn{
-		conn:          conn,
-		readBuf:       readBuf,
-		logf:          logf,
-		headerParsers: headerParsers,
+		conn:         conn,
+		readBuf:      readBuf,
+		logf:         logf,
+		headerParser: headerParser,
 	}
-}
-
-func (conn *Conn) parserHeader() {
-	for _, headerParser := range conn.headerParsers {
-		header, err := headerParser(conn.readBuf, conn.logf)
-		switch err {
-		case nil:
-			conn.logf("Use header remote addr")
-			conn.header = header
-			return
-		case ErrInvalidSignature:
-			continue
-		default:
-			conn.logf("Parse header error: %s", err)
-			return
-		}
-	}
-	conn.logf("Use raw remote addr")
 }
 
 // Read proxy to conn.Read
 func (conn *Conn) Read(buf []byte) (int, error) {
-	conn.once.Do(conn.parserHeader)
+	var err error
+	conn.once.Do(func() {
+		conn.header, err = conn.headerParser.Parse(conn.readBuf)
+	})
+	if nil != err {
+		return 0, err
+	}
 	return conn.readBuf.Read(buf)
 }
 
@@ -164,7 +153,13 @@ func (conn *Conn) LocalAddr() net.Addr {
 // RemoteAddr return addr of remote client.
 // If proxyprtocol not local, then return src from header.
 func (conn *Conn) RemoteAddr() net.Addr {
-	conn.once.Do(conn.parserHeader)
+	conn.once.Do(func() {
+		var err error
+		conn.header, err = conn.headerParser.Parse(conn.readBuf)
+		if nil != err {
+			conn.logf("Header parse error: %s", err)
+		}
+	})
 	if nil != conn.header {
 		return conn.header.SrcAddr
 	}

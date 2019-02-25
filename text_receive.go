@@ -16,11 +16,23 @@ var (
 	ErrInvalidPort        = errors.New("Invalid port")
 )
 
-// ParseTextHeader try parse proxyprotocol header.
-func ParseTextHeader(buf *bufio.Reader, logf LoggerFn) (*Header, error) {
+// TextHeaderParser for proxyprotocol v1
+type TextHeaderParser struct {
+	logf LoggerFn
+}
+
+// NewTextHeaderParser create new isntance of TextHeaderParser
+func NewTextHeaderParser(logf LoggerFn) TextHeaderParser {
+	return TextHeaderParser{
+		logf: logf,
+	}
+}
+
+// Parse proxyprotocol v1 header
+func (parser TextHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 	signatureBuf, err := buf.Peek(textSignatureLen)
 	if nil != err {
-		logf("Read text signature error: %s", err)
+		parser.logf("Read text signature error: %s", err)
 		return nil, err
 	}
 
@@ -30,7 +42,7 @@ func ParseTextHeader(buf *bufio.Reader, logf LoggerFn) (*Header, error) {
 
 	headerLine, err := buf.ReadString(TextLF)
 	if nil != err {
-		logf("Read header line error: %s", err)
+		parser.logf("Read header line error: %s", err)
 		return nil, err
 	}
 
@@ -89,4 +101,12 @@ func ParseTextHeader(buf *bufio.Reader, logf LoggerFn) (*Header, error) {
 	default:
 		return nil, ErrUnknownProtocol
 	}
+}
+
+// TextHeaderParserBuilder build TextHeaderParser
+type TextHeaderParserBuilder struct{}
+
+// Build TextHeaderParser
+func (builder *TextHeaderParserBuilder) Build(logf LoggerFn) HeaderParser {
+	return NewTextHeaderParser(logf)
 }
