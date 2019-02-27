@@ -161,8 +161,11 @@ func TestListener_Accept(t *testing.T) {
 				t.Errorf("Expect nil error, but got %s", err)
 			}
 
-			if nil == conn {
-				t.Errorf("Expect conn not equal nil")
+			logger := proxyprotocol.FallbackLogger{Logger: listener.Logger}
+			headerParser := listener.HeaderParserBuilder.Build(logger)
+			expectedConn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+			if !reflect.DeepEqual(expectedConn, conn) {
+				t.Errorf("Unexpected connection %s", conn)
 			}
 		})
 
@@ -211,7 +214,10 @@ func TestListener_Accept(t *testing.T) {
 					t.Errorf("Unexpected error %s", err)
 				}
 
-				if nil == conn {
+				logger := proxyprotocol.FallbackLogger{Logger: listener.Logger}
+				headerParser := listener.HeaderParserBuilder.Build(logger)
+				expectedConn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+				if !reflect.DeepEqual(expectedConn, conn) {
 					t.Errorf("Unexpected connection %s", conn)
 				}
 			})
