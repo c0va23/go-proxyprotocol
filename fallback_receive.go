@@ -17,7 +17,7 @@ func (parser StubHeaderParser) Parse(*bufio.Reader) (*Header, error) {
 type StubHeaderParserBuilder struct{}
 
 // Build StubHeaderParser
-func (builder StubHeaderParserBuilder) Build(logf LoggerFn) HeaderParser {
+func (builder StubHeaderParserBuilder) Build(logger Logger) HeaderParser {
 	return StubHeaderParser{}
 }
 
@@ -39,14 +39,14 @@ func DefaultFallbackHeaderParserBuilder() FallbackHeaderParserBuilder {
 }
 
 // Build FallbackHeaderParser from headerParserBuilders
-func (builder FallbackHeaderParserBuilder) Build(logf LoggerFn) HeaderParser {
+func (builder FallbackHeaderParserBuilder) Build(logger Logger) HeaderParser {
 	headerParsers := make([]HeaderParser, len(builder.headerParserBuilders))
 	for _, headerParserBuilder := range builder.headerParserBuilders {
-		headerParser := headerParserBuilder.Build(logf)
+		headerParser := headerParserBuilder.Build(logger)
 		headerParsers = append(headerParsers, headerParser)
 	}
 	return FallbackHeaderParser{
-		logf:          logf,
+		Logger:        logger,
 		HeaderParsers: headerParsers,
 	}
 }
@@ -57,14 +57,14 @@ var ErrInvalidHeader = errors.New("Invalid header")
 
 // FallbackHeaderParser iterate over HeaderParser until parser not return nil error.
 type FallbackHeaderParser struct {
-	logf          LoggerFn
+	Logger        Logger
 	HeaderParsers []HeaderParser
 }
 
 // NewFallbackHeaderParser create new instance of FallbackHeaderParser
-func NewFallbackHeaderParser(logf LoggerFn, headerParsers []HeaderParser) FallbackHeaderParser {
+func NewFallbackHeaderParser(logger Logger, headerParsers []HeaderParser) FallbackHeaderParser {
 	return FallbackHeaderParser{
-		logf:          logf,
+		Logger:        logger,
 		HeaderParsers: headerParsers,
 	}
 }
@@ -78,12 +78,12 @@ func (parser FallbackHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 		header, err := headerParser.Parse(buf)
 		switch err {
 		case nil:
-			parser.logf("Use header remote addr")
+			parser.Logger.Printf("Use header remote addr")
 			return header, nil
 		case ErrInvalidSignature:
 			continue
 		default:
-			parser.logf("Parse header error: %s", err)
+			parser.Logger.Printf("Parse header error: %s", err)
 			return nil, err
 		}
 	}

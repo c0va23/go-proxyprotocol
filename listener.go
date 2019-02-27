@@ -9,9 +9,6 @@ import (
 
 const bufferSize = 1400
 
-// LoggerFn type of logger function
-type LoggerFn func(string, ...interface{})
-
 // SourceChecker check trusted address
 type SourceChecker func(net.Addr) (bool, error)
 
@@ -26,21 +23,15 @@ func NewListener(listener net.Listener) *Listener {
 // Listener implement net.Listener
 type Listener struct {
 	net.Listener
-	LoggerFn
+	Logger
 	HeaderParserBuilder
 	SourceChecker
 }
 
-func (listener *Listener) log(str string, args ...interface{}) {
-	if nil != listener.LoggerFn {
-		listener.LoggerFn(str, args...)
-	}
-}
-
 // WithLogger copy Listener and set LoggerFn
-func (listener *Listener) WithLogger(loggerFn LoggerFn) *Listener {
+func (listener *Listener) WithLogger(logger Logger) *Listener {
 	newListener := *listener
-	newListener.LoggerFn = loggerFn
+	newListener.Logger = logger
 	return &newListener
 }
 
@@ -70,10 +61,11 @@ func (listener *Listener) Accept() (net.Conn, error) {
 		return nil, err
 	}
 
+	logger := FallbackLogger{Logger: listener.Logger}
 	if listener.SourceChecker != nil {
 		trusted, err := listener.SourceChecker(rawConn.RemoteAddr())
 		if nil != err {
-			listener.log("Source check error: %s", err)
+			logger.Printf("Source check error: %s", err)
 			return nil, err
 		}
 		if !trusted {
@@ -81,9 +73,9 @@ func (listener *Listener) Accept() (net.Conn, error) {
 		}
 	}
 
-	headerParser := listener.HeaderParserBuilder.Build(listener.log)
+	headerParser := listener.HeaderParserBuilder.Build(logger)
 
-	return NewConn(rawConn, listener.log, headerParser), nil
+	return NewConn(rawConn, logger, headerParser), nil
 }
 
 // Close is proxy to listener.Close()
@@ -99,7 +91,7 @@ func (listener Listener) Addr() net.Addr {
 // Conn is wrapper on net.Conn with overrided RemoteAddr()
 type Conn struct {
 	conn         net.Conn
-	logf         LoggerFn
+	logger       Logger
 	readBuf      *bufio.Reader
 	header       *Header
 	headerParser HeaderParser
@@ -110,7 +102,7 @@ type Conn struct {
 // If proxyprtocol header is local, when header should be nil.
 func NewConn(
 	conn net.Conn,
-	logf LoggerFn,
+	logger Logger,
 	headerParser HeaderParser,
 ) net.Conn {
 	readBuf := bufio.NewReaderSize(conn, bufferSize)
@@ -118,7 +110,7 @@ func NewConn(
 	return &Conn{
 		conn:         conn,
 		readBuf:      readBuf,
-		logf:         logf,
+		logger:       logger,
 		headerParser: headerParser,
 	}
 }
@@ -157,7 +149,7 @@ func (conn *Conn) RemoteAddr() net.Addr {
 		var err error
 		conn.header, err = conn.headerParser.Parse(conn.readBuf)
 		if nil != err {
-			conn.logf("Header parse error: %s", err)
+			conn.logger.Printf("Header parse error: %s", err)
 		}
 	})
 	if nil != conn.header {

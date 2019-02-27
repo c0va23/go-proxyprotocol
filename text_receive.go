@@ -18,13 +18,13 @@ var (
 
 // TextHeaderParser for proxyprotocol v1
 type TextHeaderParser struct {
-	logf LoggerFn
+	logger Logger
 }
 
 // NewTextHeaderParser create new isntance of TextHeaderParser
-func NewTextHeaderParser(logf LoggerFn) TextHeaderParser {
+func NewTextHeaderParser(logger Logger) TextHeaderParser {
 	return TextHeaderParser{
-		logf: logf,
+		logger: logger,
 	}
 }
 
@@ -32,7 +32,7 @@ func NewTextHeaderParser(logf LoggerFn) TextHeaderParser {
 func (parser TextHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 	signatureBuf, err := buf.Peek(textSignatureLen)
 	if nil != err {
-		parser.logf("Read text signature error: %s", err)
+		parser.logger.Printf("Read text signature error: %s", err)
 		return nil, err
 	}
 
@@ -42,7 +42,7 @@ func (parser TextHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 
 	headerLine, err := buf.ReadString(TextLF)
 	if nil != err {
-		parser.logf("Read header line error: %s", err)
+		parser.logger.Printf("Read header line error: %s", err)
 		return nil, err
 	}
 
@@ -107,6 +107,6 @@ func (parser TextHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 type TextHeaderParserBuilder struct{}
 
 // Build TextHeaderParser
-func (builder *TextHeaderParserBuilder) Build(logf LoggerFn) HeaderParser {
-	return NewTextHeaderParser(logf)
+func (builder *TextHeaderParserBuilder) Build(logger Logger) HeaderParser {
+	return NewTextHeaderParser(logger)
 }

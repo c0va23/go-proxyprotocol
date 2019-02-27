@@ -36,9 +36,10 @@ func TestListener_WithLogger(t *testing.T) {
 
 	listener := proxyprotocol.NewListener(rawListener)
 
-	withLogger := listener.WithLogger(t.Logf)
+	logger := proxyprotocol.LoggerFunc(t.Logf)
+	withLogger := listener.WithLogger(logger)
 
-	if reflect.ValueOf(withLogger.LoggerFn).Pointer() != reflect.ValueOf(t.Logf).Pointer() {
+	if reflect.ValueOf(withLogger.Logger).Pointer() != reflect.ValueOf(logger).Pointer() {
 		t.Errorf("Unexpected LoggerFn")
 	}
 }

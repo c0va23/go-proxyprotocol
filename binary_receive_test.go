@@ -11,7 +11,8 @@ import (
 )
 
 func TestParseV2Header(t *testing.T) {
-	binaryHeaderParser := proxyprotocol.NewBinaryHeaderParser(t.Logf)
+	logger := proxyprotocol.LoggerFunc(t.Logf)
+	binaryHeaderParser := proxyprotocol.NewBinaryHeaderParser(logger)
 	t.Run("signature EOF", func(t *testing.T) {
 		testParser(t, testParserArgs{
 			headerParser: binaryHeaderParser,

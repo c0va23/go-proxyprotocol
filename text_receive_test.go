@@ -21,7 +21,8 @@ func buildTextHeader(prefix []byte, parts ...string) []byte {
 }
 
 func TestParseTextHeader(t *testing.T) {
-	textHeaderParser := proxyprotocol.NewTextHeaderParser(t.Logf)
+	logger := proxyprotocol.LoggerFunc(t.Logf)
+	textHeaderParser := proxyprotocol.NewTextHeaderParser(logger)
 	t.Run("buffer EOF", func(t *testing.T) {
 		data := []byte{}
 		testParser(t, testParserArgs{

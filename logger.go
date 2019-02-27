@@ -12,3 +12,16 @@ type LoggerFunc func(format string, v ...interface{})
 func (logf LoggerFunc) Printf(format string, v ...interface{}) {
 	logf(format, v...)
 }
+
+// FallbackLogger wrap Logger or nil
+type FallbackLogger struct {
+	Logger
+}
+
+// Printf call Printf on inner logger if it not nil
+func (wrapper FallbackLogger) Printf(format string, v ...interface{}) {
+	if nil == wrapper.Logger {
+		return
+	}
+	wrapper.Printf(format, v...)
+}

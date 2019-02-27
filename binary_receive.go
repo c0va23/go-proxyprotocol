@@ -25,13 +25,13 @@ const (
 
 // BinaryHeaderParser parse proxyprotocol header from Reader
 type BinaryHeaderParser struct {
-	logf LoggerFn
+	logger Logger
 }
 
 // NewBinaryHeaderParser create new instance BinaryHeaderParser
-func NewBinaryHeaderParser(logf LoggerFn) BinaryHeaderParser {
+func NewBinaryHeaderParser(logger Logger) BinaryHeaderParser {
 	return BinaryHeaderParser{
-		logf: logf,
+		logger: logger,
 	}
 }
 
@@ -39,7 +39,7 @@ func NewBinaryHeaderParser(logf LoggerFn) BinaryHeaderParser {
 func (parser BinaryHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 	magicBuf, err := buf.Peek(BinarySignatueLen)
 	if nil != err {
-		parser.logf("Read magif prefix error: %s", err)
+		parser.logger.Printf("Read magif prefix error: %s", err)
 		return nil, err
 	}
 
@@ -51,7 +51,7 @@ func (parser BinaryHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 
 	metaBuf := make([]byte, addressLenEndPos)
 	if _, err = buf.Read(metaBuf); nil != err {
-		parser.logf("Read meta error: %s", err)
+		parser.logger.Printf("Read meta error: %s", err)
 		return nil, err
 	}
 
@@ -63,15 +63,15 @@ func (parser BinaryHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 
 	addressSizeBuf := metaBuf[addressLenStartPos:addressLenEndPos]
 	addressesLen := int(binary.BigEndian.Uint16(addressSizeBuf))
-	parser.logf("Addresses len: %d", addressesLen)
+	parser.logger.Printf("Addresses len: %d", addressesLen)
 
 	addressesBuf := make([]byte, addressesLen)
 	addressReaded, err := buf.Read(addressesBuf)
 	if nil != err {
-		parser.logf("Read address error: %s", err)
+		parser.logger.Printf("Read address error: %s", err)
 		return nil, err
 	}
-	parser.logf("Address readed: %d", addressReaded)
+	parser.logger.Printf("Address readed: %d", addressReaded)
 
 	switch versionCommandByte & BinaryCommandMask {
 	case BinaryCommandProxy:
@@ -131,6 +131,6 @@ func parseAddressData(addressesBuf []byte, IPLen int) (*Header, error) {
 type BinaryHeaderParserBuilder struct{}
 
 // Build BinaryHeaderParser
-func (builder *BinaryHeaderParserBuilder) Build(logf LoggerFn) HeaderParser {
-	return NewBinaryHeaderParser(logf)
+func (builder *BinaryHeaderParserBuilder) Build(logger Logger) HeaderParser {
+	return NewBinaryHeaderParser(logger)
 }

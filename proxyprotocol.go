@@ -17,7 +17,7 @@ type Header struct {
 
 // HeaderParserBuilder build HeaderParser's
 type HeaderParserBuilder interface {
-	Build(LoggerFn) HeaderParser
+	Build(Logger) HeaderParser
 }
 
 // HeaderParser describe interface for header parsers
