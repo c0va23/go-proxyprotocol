@@ -11,9 +11,9 @@ import (
 
 // Text protocol errors
 var (
-	ErrInvalidAddressList = errors.New("Invalid address list")
-	ErrInvalidIP          = errors.New("Invalid IP")
-	ErrInvalidPort        = errors.New("Invalid port")
+	ErrInvalidAddressList = errors.New("invalid address list")
+	ErrInvalidIP          = errors.New("invalid IP")
+	ErrInvalidPort        = errors.New("invalid port")
 )
 
 // TextHeaderParser for proxyprotocol v1

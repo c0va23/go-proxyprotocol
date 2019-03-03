@@ -10,9 +10,9 @@ import (
 
 // Errors
 var (
-	ErrUnknownVersion       = errors.New("Unknown version")
-	ErrUnknownCommand       = errors.New("Unknown command")
-	ErrUnexpectedAddressLen = errors.New("Unexpected address length")
+	ErrUnknownVersion       = errors.New("unknown version")
+	ErrUnknownCommand       = errors.New("unknown command")
+	ErrUnexpectedAddressLen = errors.New("unexpected address length")
 )
 
 // Meta buffer byte positoin
@@ -112,7 +112,7 @@ func parseAddressData(addressesBuf []byte, IPLen int) (*Header, error) {
 	addressesBuf = addressesBuf[BinaryPortLen:]
 
 	dstPort := binary.BigEndian.Uint16(addressesBuf[:BinaryPortLen])
-	addressesBuf = addressesBuf[BinaryPortLen:]
+	// addressesBuf = addressesBuf[BinaryPortLen:]
 
 	return &Header{
 		SrcAddr: &net.TCPAddr{

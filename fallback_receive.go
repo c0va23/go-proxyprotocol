@@ -53,7 +53,7 @@ func (builder FallbackHeaderParserBuilder) Build(logger Logger) HeaderParser {
 
 // ErrInvalidHeader returned by FallbackHeaderParser when all headerParsers return
 // ErrInvalidSignature
-var ErrInvalidHeader = errors.New("Invalid header")
+var ErrInvalidHeader = errors.New("invalid header")
 
 // FallbackHeaderParser iterate over HeaderParser until parser not return nil error.
 type FallbackHeaderParser struct {

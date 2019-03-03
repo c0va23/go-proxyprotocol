@@ -27,6 +27,6 @@ type HeaderParser interface {
 
 // Shared HeaderParser errors
 var (
-	ErrInvalidSignature = errors.New("Invalid signature")
-	ErrUnknownProtocol  = errors.New("Unknown protocol")
+	ErrInvalidSignature = errors.New("invalid signature")
+	ErrUnknownProtocol  = errors.New("unknown protocol")
 )
