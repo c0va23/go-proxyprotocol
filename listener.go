@@ -9,9 +9,10 @@ const bufferSize = 1400
 // SourceChecker check trusted address
 type SourceChecker func(net.Addr) (bool, error)
 
-// NewListener create new proxyprocol.Listener from any net.Listener.
-func NewListener(listener net.Listener) *Listener {
-	return &Listener{
+// NewListener construct proxyprocol.Listener from other net.Listener and with
+// *DefaultFallbackHeaderParserBuilder()*.
+func NewListener(listener net.Listener) Listener {
+	return Listener{
 		Listener:            listener,
 		HeaderParserBuilder: DefaultFallbackHeaderParserBuilder(),
 	}
@@ -25,34 +26,34 @@ type Listener struct {
 	SourceChecker
 }
 
-// WithLogger copy Listener and set LoggerFn
-func (listener *Listener) WithLogger(logger Logger) *Listener {
-	newListener := *listener
+// WithLogger copy Listener and set Logger
+func (listener Listener) WithLogger(logger Logger) Listener {
+	newListener := listener
 	newListener.Logger = logger
-	return &newListener
+	return newListener
 }
 
 // WithHeaderParserBuilder copy Listener and set HeaderParserBuilder.
 // Can be used to disable or reorder HeaderParser's.
-func (listener *Listener) WithHeaderParserBuilder(
+func (listener Listener) WithHeaderParserBuilder(
 	headerParserBuilder HeaderParserBuilder,
-) *Listener {
-	newListener := *listener
+) Listener {
+	newListener := listener
 	newListener.HeaderParserBuilder = headerParserBuilder
-	return &newListener
+	return newListener
 }
 
 // WithSourceChecker copy Listener and set SourceChecker
-func (listener *Listener) WithSourceChecker(sourceChecker SourceChecker) *Listener {
-	newListener := *listener
+func (listener Listener) WithSourceChecker(sourceChecker SourceChecker) Listener {
+	newListener := listener
 	newListener.SourceChecker = sourceChecker
-	return &newListener
+	return newListener
 }
 
 // Accept implement net.Listener.Accept().
 // If request have proxyprotocol header, then wrap connection into proxyprotocol.Conn.
 // Otherwise return raw net.Conn.
-func (listener *Listener) Accept() (net.Conn, error) {
+func (listener Listener) Accept() (net.Conn, error) {
 	rawConn, err := listener.Listener.Accept()
 	if nil != err {
 		return nil, err
@@ -76,7 +77,7 @@ func (listener *Listener) Accept() (net.Conn, error) {
 }
 
 // Close is proxy to listener.Close()
-func (listener *Listener) Close() error {
+func (listener Listener) Close() error {
 	return listener.Listener.Close()
 }
 

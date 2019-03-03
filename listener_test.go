@@ -18,7 +18,7 @@ func TestNewListener(t *testing.T) {
 
 	listener := proxyprotocol.NewListener(rawListener)
 
-	expectedListener := &proxyprotocol.Listener{
+	expectedListener := proxyprotocol.Listener{
 		Listener:            rawListener,
 		HeaderParserBuilder: proxyprotocol.DefaultFallbackHeaderParserBuilder(),
 	}
