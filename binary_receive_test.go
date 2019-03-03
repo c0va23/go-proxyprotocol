@@ -11,9 +11,11 @@ import (
 )
 
 func TestParseV2Header(t *testing.T) {
+	logger := proxyprotocol.LoggerFunc(t.Logf)
+	binaryHeaderParser := proxyprotocol.NewBinaryHeaderParser(logger)
 	t.Run("signature EOF", func(t *testing.T) {
 		testParser(t, testParserArgs{
-			headerParser: proxyprotocol.ParseBinaryHeader,
+			headerParser: binaryHeaderParser,
 			data:         []byte{},
 			err:          io.EOF,
 		})
@@ -22,7 +24,7 @@ func TestParseV2Header(t *testing.T) {
 	t.Run("Invalid signature", func(t *testing.T) {
 		data := make([]byte, proxyprotocol.BinarySignatueLen)
 		testParser(t, testParserArgs{
-			headerParser: proxyprotocol.ParseBinaryHeader,
+			headerParser: binaryHeaderParser,
 			data:         data,
 			err:          proxyprotocol.ErrInvalidSignature,
 		})
@@ -31,7 +33,7 @@ func TestParseV2Header(t *testing.T) {
 	t.Run("meta EOF", func(t *testing.T) {
 		data := append(proxyprotocol.BinarySignatue)
 		testParser(t, testParserArgs{
-			headerParser: proxyprotocol.ParseBinaryHeader,
+			headerParser: binaryHeaderParser,
 			data:         data,
 			err:          io.EOF,
 		})
@@ -41,7 +43,7 @@ func TestParseV2Header(t *testing.T) {
 		invalidVersoin := byte(0x00)
 		data := append(proxyprotocol.BinarySignatue, invalidVersoin)
 		testParser(t, testParserArgs{
-			headerParser: proxyprotocol.ParseBinaryHeader,
+			headerParser: binaryHeaderParser,
 			data:         data,
 			err:          proxyprotocol.ErrUnknownVersion,
 		})
@@ -52,7 +54,7 @@ func TestParseV2Header(t *testing.T) {
 		t.Logf("Version command bits: %02x", invalidCommand)
 		data := append(proxyprotocol.BinarySignatue, invalidCommand)
 		testParser(t, testParserArgs{
-			headerParser: proxyprotocol.ParseBinaryHeader,
+			headerParser: binaryHeaderParser,
 			data:         data,
 			err:          proxyprotocol.ErrUnknownCommand,
 		})
@@ -63,7 +65,7 @@ func TestParseV2Header(t *testing.T) {
 		protocol := proxyprotocol.BinaryProtocolUnspec
 		data := append(proxyprotocol.BinarySignatue, commandVerison, protocol, 0, 0)
 		testParser(t, testParserArgs{
-			headerParser: proxyprotocol.ParseBinaryHeader,
+			headerParser: binaryHeaderParser,
 			data:         data,
 			header:       nil,
 			err:          nil,
@@ -87,7 +89,7 @@ func TestParseV2Header(t *testing.T) {
 		data = append(data, tlvData...)
 
 		testParser(t, testParserArgs{
-			headerParser: proxyprotocol.ParseBinaryHeader,
+			headerParser: binaryHeaderParser,
 			data:         data,
 			header:       nil,
 			err:          nil,
@@ -100,7 +102,7 @@ func TestParseV2Header(t *testing.T) {
 		invalidProtocol := byte(0xFF)
 		data := append(proxyprotocol.BinarySignatue, commandVerison, invalidProtocol, 0, 0)
 		testParser(t, testParserArgs{
-			headerParser: proxyprotocol.ParseBinaryHeader,
+			headerParser: binaryHeaderParser,
 			data:         data,
 			err:          proxyprotocol.ErrUnknownProtocol,
 			readAll:      true,
@@ -111,7 +113,7 @@ func TestParseV2Header(t *testing.T) {
 		commandVerison := proxyprotocol.BinaryCommandProxy | proxyprotocol.BinaryVersion2
 		data := append(proxyprotocol.BinarySignatue, commandVerison, proxyprotocol.BinaryProtocolUnspec, 0, 0)
 		testParser(t, testParserArgs{
-			headerParser: proxyprotocol.ParseBinaryHeader,
+			headerParser: binaryHeaderParser,
 			data:         data,
 			header:       nil,
 			err:          nil,
@@ -126,7 +128,7 @@ func TestParseV2Header(t *testing.T) {
 		t.Run("Invalid address size", func(t *testing.T) {
 			data := append(data, 0, 0)
 			testParser(t, testParserArgs{
-				headerParser: proxyprotocol.ParseBinaryHeader,
+				headerParser: binaryHeaderParser,
 				data:         data,
 				err:          proxyprotocol.ErrUnexpectedAddressLen,
 				readAll:      true,
@@ -139,7 +141,7 @@ func TestParseV2Header(t *testing.T) {
 
 			t.Run("Invalid address data size", func(t *testing.T) {
 				testParser(t, testParserArgs{
-					headerParser: proxyprotocol.ParseBinaryHeader,
+					headerParser: binaryHeaderParser,
 					data:         data,
 					err:          io.EOF,
 					readAll:      true,
@@ -174,7 +176,7 @@ func TestParseV2Header(t *testing.T) {
 				data = append(data, srcPortBuf...)
 				data = append(data, dstPortBuf...)
 				testParser(t, testParserArgs{
-					headerParser: proxyprotocol.ParseBinaryHeader,
+					headerParser: binaryHeaderParser,
 					data:         data,
 					header:       &expectedHeader,
 					readAll:      true,
@@ -190,7 +192,7 @@ func TestParseV2Header(t *testing.T) {
 		t.Run("Invalid address size", func(t *testing.T) {
 			data := append(data, 0, 0)
 			testParser(t, testParserArgs{
-				headerParser: proxyprotocol.ParseBinaryHeader,
+				headerParser: binaryHeaderParser,
 				data:         data,
 				err:          proxyprotocol.ErrUnexpectedAddressLen,
 				readAll:      true,
@@ -203,7 +205,7 @@ func TestParseV2Header(t *testing.T) {
 
 			t.Run("Invalid address data size", func(t *testing.T) {
 				testParser(t, testParserArgs{
-					headerParser: proxyprotocol.ParseBinaryHeader,
+					headerParser: binaryHeaderParser,
 					data:         data,
 					err:          io.EOF,
 					readAll:      true,
@@ -238,7 +240,7 @@ func TestParseV2Header(t *testing.T) {
 				data = append(data, srcPortBuf...)
 				data = append(data, dstPortBuf...)
 				testParser(t, testParserArgs{
-					headerParser: proxyprotocol.ParseBinaryHeader,
+					headerParser: binaryHeaderParser,
 					data:         data,
 					header:       &expectedHeader,
 					readAll:      true,
@@ -282,7 +284,7 @@ func TestParseV2Header(t *testing.T) {
 				data = append(data, dstPortBuf...)
 				data = append(data, proxyprotocol.TLVTypeNoop, 0, 0)
 				testParser(t, testParserArgs{
-					headerParser: proxyprotocol.ParseBinaryHeader,
+					headerParser: binaryHeaderParser,
 					data:         data,
 					header:       &expectedHeader,
 					readAll:      true,

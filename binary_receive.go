@@ -10,9 +10,9 @@ import (
 
 // Errors
 var (
-	ErrUnknownVersion       = errors.New("Unknown version")
-	ErrUnknownCommand       = errors.New("Unknown command")
-	ErrUnexpectedAddressLen = errors.New("Unexpected address length")
+	ErrUnknownVersion       = errors.New("unknown version")
+	ErrUnknownCommand       = errors.New("unknown command")
+	ErrUnexpectedAddressLen = errors.New("unexpected address length")
 )
 
 // Meta buffer byte positoin
@@ -23,11 +23,23 @@ const (
 	addressLenEndPos   = 4
 )
 
-// ParseBinaryHeader from incoming connection
-func ParseBinaryHeader(buf *bufio.Reader, logf LoggerFn) (*Header, error) {
+// BinaryHeaderParser parse proxyprotocol header from Reader
+type BinaryHeaderParser struct {
+	logger Logger
+}
+
+// NewBinaryHeaderParser construct BinaryHeaderParser
+func NewBinaryHeaderParser(logger Logger) BinaryHeaderParser {
+	return BinaryHeaderParser{
+		logger: logger,
+	}
+}
+
+// Parse buffer
+func (parser BinaryHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 	magicBuf, err := buf.Peek(BinarySignatueLen)
 	if nil != err {
-		logf("Read magif prefix error: %s", err)
+		parser.logger.Printf("Read magif prefix error: %s", err)
 		return nil, err
 	}
 
@@ -39,7 +51,7 @@ func ParseBinaryHeader(buf *bufio.Reader, logf LoggerFn) (*Header, error) {
 
 	metaBuf := make([]byte, addressLenEndPos)
 	if _, err = buf.Read(metaBuf); nil != err {
-		logf("Read meta error: %s", err)
+		parser.logger.Printf("Read meta error: %s", err)
 		return nil, err
 	}
 
@@ -51,15 +63,15 @@ func ParseBinaryHeader(buf *bufio.Reader, logf LoggerFn) (*Header, error) {
 
 	addressSizeBuf := metaBuf[addressLenStartPos:addressLenEndPos]
 	addressesLen := int(binary.BigEndian.Uint16(addressSizeBuf))
-	logf("Addresses len: %d", addressesLen)
+	parser.logger.Printf("Addresses len: %d", addressesLen)
 
 	addressesBuf := make([]byte, addressesLen)
 	addressReaded, err := buf.Read(addressesBuf)
 	if nil != err {
-		logf("Read address error: %s", err)
+		parser.logger.Printf("Read address error: %s", err)
 		return nil, err
 	}
-	logf("Address readed: %d", addressReaded)
+	parser.logger.Printf("Address readed: %d", addressReaded)
 
 	switch versionCommandByte & BinaryCommandMask {
 	case BinaryCommandProxy:
@@ -100,7 +112,7 @@ func parseAddressData(addressesBuf []byte, IPLen int) (*Header, error) {
 	addressesBuf = addressesBuf[BinaryPortLen:]
 
 	dstPort := binary.BigEndian.Uint16(addressesBuf[:BinaryPortLen])
-	addressesBuf = addressesBuf[BinaryPortLen:]
+	// addressesBuf = addressesBuf[BinaryPortLen:]
 
 	return &Header{
 		SrcAddr: &net.TCPAddr{
@@ -113,4 +125,17 @@ func parseAddressData(addressesBuf []byte, IPLen int) (*Header, error) {
 		},
 	}, nil
 
+}
+
+// BinaryHeaderParserBuilder build BinaryHeaderParser
+type BinaryHeaderParserBuilder struct{}
+
+// NewBinaryHeaderParserBuilder construct BinaryHeaderParserBuilder
+func NewBinaryHeaderParserBuilder() BinaryHeaderParserBuilder {
+	return BinaryHeaderParserBuilder{}
+}
+
+// Build BinaryHeaderParser
+func (builder BinaryHeaderParserBuilder) Build(logger Logger) HeaderParser {
+	return NewBinaryHeaderParser(logger)
 }

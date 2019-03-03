@@ -15,14 +15,18 @@ type Header struct {
 	DstAddr net.Addr
 }
 
+// HeaderParserBuilder build HeaderParser's
+type HeaderParserBuilder interface {
+	Build(Logger) HeaderParser
+}
+
 // HeaderParser describe interface for header parsers
-type HeaderParser func(
-	readBuf *bufio.Reader,
-	logf LoggerFn,
-) (*Header, error)
+type HeaderParser interface {
+	Parse(readBuf *bufio.Reader) (*Header, error)
+}
 
 // Shared HeaderParser errors
 var (
-	ErrInvalidSignature = errors.New("Invalid signature")
-	ErrUnknownProtocol  = errors.New("Unknown protocol")
+	ErrInvalidSignature = errors.New("invalid signature")
+	ErrUnknownProtocol  = errors.New("unknown protocol")
 )
