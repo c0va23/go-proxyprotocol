@@ -16,11 +16,12 @@ func TestNewListener(t *testing.T) {
 
 	rawListener := NewMockListener(mockCtrl)
 
-	listener := proxyprotocol.NewListener(rawListener)
+	builder := NewMockHeaderParserBuilder(mockCtrl)
+	listener := proxyprotocol.NewListener(rawListener, builder)
 
 	expectedListener := proxyprotocol.Listener{
 		Listener:            rawListener,
-		HeaderParserBuilder: proxyprotocol.DefaultFallbackHeaderParserBuilder(),
+		HeaderParserBuilder: builder,
 	}
 
 	if !reflect.DeepEqual(expectedListener, listener) {
@@ -34,7 +35,8 @@ func TestListener_WithLogger(t *testing.T) {
 
 	rawListener := NewMockListener(mockCtrl)
 
-	listener := proxyprotocol.NewListener(rawListener)
+	builder := NewMockHeaderParserBuilder(mockCtrl)
+	listener := proxyprotocol.NewListener(rawListener, builder)
 
 	logger := proxyprotocol.LoggerFunc(t.Logf)
 	withLogger := listener.WithLogger(logger)
@@ -50,7 +52,8 @@ func TestListener_WithSourceChecker(t *testing.T) {
 
 	rawListener := NewMockListener(mockCtrl)
 
-	listener := proxyprotocol.NewListener(rawListener)
+	builder := NewMockHeaderParserBuilder(mockCtrl)
+	listener := proxyprotocol.NewListener(rawListener, builder)
 
 	sourceChecker := func(net.Addr) (bool, error) {
 		return false, nil
@@ -69,15 +72,16 @@ func TestListener_WithHeaderParserBuilder(t *testing.T) {
 
 	rawListener := NewMockListener(mockCtrl)
 
-	listener := proxyprotocol.NewListener(rawListener)
+	builder := NewMockHeaderParserBuilder(mockCtrl)
+	listener := proxyprotocol.NewListener(rawListener, builder)
 
-	binaryHeaderParserBuilder := new(proxyprotocol.BinaryHeaderParserBuilder)
-	withHeaderParserBuilder := listener.WithHeaderParserBuilder(binaryHeaderParserBuilder)
+	otherBuilder := NewMockHeaderParserBuilder(mockCtrl)
+	withHeaderParserBuilder := listener.WithHeaderParserBuilder(otherBuilder)
 
-	if withHeaderParserBuilder.HeaderParserBuilder != binaryHeaderParserBuilder {
+	if withHeaderParserBuilder.HeaderParserBuilder != otherBuilder {
 		t.Errorf(
-			"Unexpected HeaderParserBuilder. Expect %s, got %s.",
-			binaryHeaderParserBuilder,
+			"Unexpected HeaderParserBuilder. Expect %v, got %v.",
+			otherBuilder,
 			withHeaderParserBuilder.HeaderParserBuilder,
 		)
 	}
@@ -89,7 +93,8 @@ func TestListener_Close(t *testing.T) {
 
 	rawListener := NewMockListener(mockCtrl)
 
-	listener := proxyprotocol.NewListener(rawListener)
+	builder := NewMockHeaderParserBuilder(mockCtrl)
+	listener := proxyprotocol.NewListener(rawListener, builder)
 
 	expectedErr := errors.New("Closer error")
 	rawListener.EXPECT().Close().Return(expectedErr)
@@ -106,7 +111,8 @@ func TestListener_Addr(t *testing.T) {
 
 	rawListener := NewMockListener(mockCtrl)
 
-	listener := proxyprotocol.NewListener(rawListener)
+	builder := NewMockHeaderParserBuilder(mockCtrl)
+	listener := proxyprotocol.NewListener(rawListener, builder)
 
 	expectedAddr := &net.TCPAddr{
 		IP:   net.IPv4(1, 2, 3, 4),
@@ -127,7 +133,8 @@ func TestListener_Accept(t *testing.T) {
 
 	rawListener := NewMockListener(mockCtrl)
 
-	listener := proxyprotocol.NewListener(rawListener)
+	builder := NewMockHeaderParserBuilder(mockCtrl)
+	listener := proxyprotocol.NewListener(rawListener, builder)
 
 	t.Run("when raw listener accept return error", func(t *testing.T) {
 		acceptErr := errors.New("Accept error")
@@ -155,14 +162,16 @@ func TestListener_Accept(t *testing.T) {
 		rawConn.EXPECT().RemoteAddr().Return(&remoteAddr).AnyTimes()
 
 		t.Run("listener not have SourceChecker", func(t *testing.T) {
+			logger := proxyprotocol.FallbackLogger{Logger: listener.Logger}
+			headerParser := NewMockHeaderParser(mockCtrl)
+			builder.EXPECT().Build(logger).Return(headerParser)
+
 			conn, err := listener.Accept()
 
 			if nil != err {
 				t.Errorf("Expect nil error, but got %s", err)
 			}
 
-			logger := proxyprotocol.FallbackLogger{Logger: listener.Logger}
-			headerParser := listener.HeaderParserBuilder.Build(logger)
 			expectedConn := proxyprotocol.NewConn(rawConn, logger, headerParser)
 			if !reflect.DeepEqual(expectedConn, conn) {
 				t.Errorf("Unexpected connection %s", conn)
@@ -209,13 +218,15 @@ func TestListener_Accept(t *testing.T) {
 				sourceCheckErr = nil
 				sourceCheckResult = true
 
+				logger := proxyprotocol.FallbackLogger{Logger: listener.Logger}
+				headerParser := NewMockHeaderParser(mockCtrl)
+				builder.EXPECT().Build(logger).Return(headerParser)
+
 				conn, err := listener.Accept()
 				if nil != err {
 					t.Errorf("Unexpected error %s", err)
 				}
 
-				logger := proxyprotocol.FallbackLogger{Logger: listener.Logger}
-				headerParser := listener.HeaderParserBuilder.Build(logger)
 				expectedConn := proxyprotocol.NewConn(rawConn, logger, headerParser)
 				if !reflect.DeepEqual(expectedConn, conn) {
 					t.Errorf("Unexpected connection %s", conn)

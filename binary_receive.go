@@ -126,16 +126,3 @@ func parseAddressData(addressesBuf []byte, IPLen int) (*Header, error) {
 	}, nil
 
 }
-
-// BinaryHeaderParserBuilder build BinaryHeaderParser
-type BinaryHeaderParserBuilder struct{}
-
-// NewBinaryHeaderParserBuilder construct BinaryHeaderParserBuilder
-func NewBinaryHeaderParserBuilder() BinaryHeaderParserBuilder {
-	return BinaryHeaderParserBuilder{}
-}
-
-// Build BinaryHeaderParser
-func (builder BinaryHeaderParserBuilder) Build(logger Logger) HeaderParser {
-	return NewBinaryHeaderParser(logger)
-}

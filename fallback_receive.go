@@ -18,40 +18,20 @@ func (parser StubHeaderParser) Parse(*bufio.Reader) (*Header, error) {
 	return nil, nil
 }
 
-// StubHeaderParserBuilder build StubHeaderParser
-type StubHeaderParserBuilder struct{}
-
-// NewStubHeaderParserBuilder is StubHeaderParserBuilder constructor
-func NewStubHeaderParserBuilder() StubHeaderParserBuilder {
-	return StubHeaderParserBuilder{}
-}
-
-// Build StubHeaderParser
-func (builder StubHeaderParserBuilder) Build(logger Logger) HeaderParser {
-	return NewStubHeaderParser()
-}
-
 // FallbackHeaderParserBuilder build FallbackHeaderParser
-type FallbackHeaderParserBuilder struct {
-	headerParserBuilders []HeaderParserBuilder
-}
+type FallbackHeaderParserBuilder []HeaderParserBuilder
 
-// DefaultFallbackHeaderParserBuilder build FallbackHeaderParserBuilder with
-// default HeaderParserList (TextHeaderParser, BinaryHeaderParser, StubHeaderParser)
-func DefaultFallbackHeaderParserBuilder() FallbackHeaderParserBuilder {
-	return FallbackHeaderParserBuilder{
-		headerParserBuilders: []HeaderParserBuilder{
-			NewTextHeaderParserBuilder(),
-			NewBinaryHeaderParserBuilder(),
-			NewStubHeaderParserBuilder(),
-		},
-	}
+//NewFallbackHeaderParserBuilder construct FallbackHeaderParserBuilder
+func NewFallbackHeaderParserBuilder(
+	headerParserBuilders ...HeaderParserBuilder,
+) FallbackHeaderParserBuilder {
+	return FallbackHeaderParserBuilder(headerParserBuilders)
 }
 
 // Build FallbackHeaderParser from headerParserBuilders
-func (builder FallbackHeaderParserBuilder) Build(logger Logger) HeaderParser {
-	headerParsers := make([]HeaderParser, len(builder.headerParserBuilders))
-	for _, headerParserBuilder := range builder.headerParserBuilders {
+func (headerParserBuilders FallbackHeaderParserBuilder) Build(logger Logger) HeaderParser {
+	headerParsers := make([]HeaderParser, 0, len(headerParserBuilders))
+	for _, headerParserBuilder := range headerParserBuilders {
 		headerParser := headerParserBuilder.Build(logger)
 		headerParsers = append(headerParsers, headerParser)
 	}

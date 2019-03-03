@@ -9,12 +9,14 @@ const bufferSize = 1400
 // SourceChecker check trusted address
 type SourceChecker func(net.Addr) (bool, error)
 
-// NewListener construct proxyprocol.Listener from other net.Listener and with
-// DefaultFallbackHeaderParserBuilder().
-func NewListener(listener net.Listener) Listener {
+// NewListener construct Listener
+func NewListener(
+	listener net.Listener,
+	headerParserBuilder HeaderParserBuilder,
+) Listener {
 	return Listener{
 		Listener:            listener,
-		HeaderParserBuilder: DefaultFallbackHeaderParserBuilder(),
+		HeaderParserBuilder: headerParserBuilder,
 	}
 }
 

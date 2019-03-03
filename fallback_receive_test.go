@@ -29,6 +29,42 @@ func TestStubHeaderParser_Parse(t *testing.T) {
 	}
 }
 
+func TestFallbackHeaderParserBuilder_Build(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	logger := NewMockLogger(mockCtrl)
+
+	firstHeaderParserBuilder := NewMockHeaderParserBuilder(mockCtrl)
+	secondHeaderParserBuilder := NewMockHeaderParserBuilder(mockCtrl)
+
+	firstHeaderParser := NewMockHeaderParser(mockCtrl)
+	secondHeaderParser := NewMockHeaderParser(mockCtrl)
+
+	firstHeaderParserBuilder.EXPECT().Build(logger).Return(firstHeaderParser)
+	secondHeaderParserBuilder.EXPECT().Build(logger).Return(secondHeaderParser)
+
+	headerParserBuilders := proxyprotocol.NewFallbackHeaderParserBuilder(
+		firstHeaderParserBuilder,
+		secondHeaderParserBuilder,
+	)
+
+	headerParser := headerParserBuilders.Build(logger)
+
+	expectedHeaderParser := proxyprotocol.FallbackHeaderParser{
+		Logger: logger,
+		HeaderParsers: []proxyprotocol.HeaderParser{
+			firstHeaderParser,
+			secondHeaderParser,
+		},
+	}
+
+	if !reflect.DeepEqual(expectedHeaderParser, headerParser) {
+		t.Errorf("Unexpected header parser %+v", headerParser)
+	}
+
+}
+
 func TestNewFallbackHeaderParser(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
