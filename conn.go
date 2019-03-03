@@ -7,7 +7,12 @@ import (
 	"time"
 )
 
-// Conn is wrapper on net.Conn with overrided RemoteAddr()
+/*
+Conn is wrapper on net.Conn with overrided RemoteAddr().
+
+On first call Read() or RemoteAddr() parse proxyprotocol header and store
+local and remote addresses.
+*/
 type Conn struct {
 	conn         net.Conn
 	logger       Logger
@@ -19,7 +24,6 @@ type Conn struct {
 }
 
 // NewConn create wrapper on net.Conn.
-// If proxyprtocol header is local, when header should be nil.
 func NewConn(
 	conn net.Conn,
 	logger Logger,
@@ -42,7 +46,15 @@ func (conn *Conn) parseHeader() {
 	}
 }
 
-// Read proxy to conn.Read
+/*
+Read on first call parse proxyprotocol header.
+
+If header parser return error, then error stored and returned. Otherwise call
+Read on source connection.
+
+Following calls of Read function check parse header error.
+If error not nil, then error returned. Otherwise called source "conn.Read".
+*/
 func (conn *Conn) Read(buf []byte) (int, error) {
 	conn.once.Do(conn.parseHeader)
 
@@ -68,8 +80,12 @@ func (conn *Conn) LocalAddr() net.Addr {
 	return conn.conn.LocalAddr()
 }
 
-// RemoteAddr return addr of remote client.
-// If proxyprtocol not local, then return src from header.
+/*
+RemoteAddr on first call parse proxyprotocol header.
+
+If header parser return header, then return source address from header.
+Otherwise return original source address.
+*/
 func (conn *Conn) RemoteAddr() net.Addr {
 	conn.once.Do(conn.parseHeader)
 	if nil != conn.header {

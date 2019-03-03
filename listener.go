@@ -10,7 +10,7 @@ const bufferSize = 1400
 type SourceChecker func(net.Addr) (bool, error)
 
 // NewListener construct proxyprocol.Listener from other net.Listener and with
-// *DefaultFallbackHeaderParserBuilder()*.
+// DefaultFallbackHeaderParserBuilder().
 func NewListener(listener net.Listener) Listener {
 	return Listener{
 		Listener:            listener,
@@ -50,9 +50,15 @@ func (listener Listener) WithSourceChecker(sourceChecker SourceChecker) Listener
 	return newListener
 }
 
-// Accept implement net.Listener.Accept().
-// If request have proxyprotocol header, then wrap connection into proxyprotocol.Conn.
-// Otherwise return raw net.Conn.
+/*
+Accept implement net.Listener.Accept().
+
+When listener have SourceChecker, then check source adddress.
+If source checker return error, then return error.
+If source checker return false, then return raw connectin.
+
+Otherwise connection wrapped into Conn with header parser.
+*/
 func (listener Listener) Accept() (net.Conn, error) {
 	rawConn, err := listener.Listener.Accept()
 	if nil != err {

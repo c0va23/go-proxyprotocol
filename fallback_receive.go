@@ -79,10 +79,15 @@ func NewFallbackHeaderParser(logger Logger, headerParsers ...HeaderParser) Fallb
 	}
 }
 
-// Parse interate over headerParsers.
-// If any parser return not nil or not ErrInvalidSignature error, then return its error.
-// If any parser return nil error, then return its header.
-// If all parsers return error ErrInvalidSignature, then return ErrInvalidHeader.
+/*
+Parse iterate over headerParsers call Parse().
+
+If any parser return not nil or not ErrInvalidSignature error, then return its error.
+
+If any parser return nil error, then return header.
+
+If all parsers return error ErrInvalidSignature, then return ErrInvalidHeader.
+*/
 func (parser FallbackHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 	for _, headerParser := range parser.HeaderParsers {
 		header, err := headerParser.Parse(buf)
