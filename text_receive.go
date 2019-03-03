@@ -21,7 +21,7 @@ type TextHeaderParser struct {
 	logger Logger
 }
 
-// NewTextHeaderParser create new isntance of TextHeaderParser
+// NewTextHeaderParser construct TextHeaderParser
 func NewTextHeaderParser(logger Logger) TextHeaderParser {
 	return TextHeaderParser{
 		logger: logger,
@@ -106,7 +106,12 @@ func (parser TextHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 // TextHeaderParserBuilder build TextHeaderParser
 type TextHeaderParserBuilder struct{}
 
+// NewTextHeaderParserBuilder construct TextHeaderParserBuilder
+func NewTextHeaderParserBuilder() TextHeaderParserBuilder {
+	return TextHeaderParserBuilder{}
+}
+
 // Build TextHeaderParser
-func (builder *TextHeaderParserBuilder) Build(logger Logger) HeaderParser {
+func (builder TextHeaderParserBuilder) Build(logger Logger) HeaderParser {
 	return NewTextHeaderParser(logger)
 }

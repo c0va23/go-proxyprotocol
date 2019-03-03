@@ -28,7 +28,7 @@ type BinaryHeaderParser struct {
 	logger Logger
 }
 
-// NewBinaryHeaderParser create new instance BinaryHeaderParser
+// NewBinaryHeaderParser construct BinaryHeaderParser
 func NewBinaryHeaderParser(logger Logger) BinaryHeaderParser {
 	return BinaryHeaderParser{
 		logger: logger,
@@ -130,7 +130,12 @@ func parseAddressData(addressesBuf []byte, IPLen int) (*Header, error) {
 // BinaryHeaderParserBuilder build BinaryHeaderParser
 type BinaryHeaderParserBuilder struct{}
 
+// NewBinaryHeaderParserBuilder construct BinaryHeaderParserBuilder
+func NewBinaryHeaderParserBuilder() BinaryHeaderParserBuilder {
+	return BinaryHeaderParserBuilder{}
+}
+
 // Build BinaryHeaderParser
-func (builder *BinaryHeaderParserBuilder) Build(logger Logger) HeaderParser {
+func (builder BinaryHeaderParserBuilder) Build(logger Logger) HeaderParser {
 	return NewBinaryHeaderParser(logger)
 }

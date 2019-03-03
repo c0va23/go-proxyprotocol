@@ -8,6 +8,11 @@ import (
 // StubHeaderParser always return nil Header
 type StubHeaderParser struct{}
 
+// NewStubHeaderParser construct StubHeaderParser
+func NewStubHeaderParser() StubHeaderParser {
+	return StubHeaderParser{}
+}
+
 // Parse always return nil, nil
 func (parser StubHeaderParser) Parse(*bufio.Reader) (*Header, error) {
 	return nil, nil
@@ -16,9 +21,14 @@ func (parser StubHeaderParser) Parse(*bufio.Reader) (*Header, error) {
 // StubHeaderParserBuilder build StubHeaderParser
 type StubHeaderParserBuilder struct{}
 
+// NewStubHeaderParserBuilder is StubHeaderParserBuilder constructor
+func NewStubHeaderParserBuilder() StubHeaderParserBuilder {
+	return StubHeaderParserBuilder{}
+}
+
 // Build StubHeaderParser
 func (builder StubHeaderParserBuilder) Build(logger Logger) HeaderParser {
-	return StubHeaderParser{}
+	return NewStubHeaderParser()
 }
 
 // FallbackHeaderParserBuilder build FallbackHeaderParser
@@ -31,9 +41,9 @@ type FallbackHeaderParserBuilder struct {
 func DefaultFallbackHeaderParserBuilder() FallbackHeaderParserBuilder {
 	return FallbackHeaderParserBuilder{
 		headerParserBuilders: []HeaderParserBuilder{
-			new(TextHeaderParserBuilder),
-			new(BinaryHeaderParserBuilder),
-			new(StubHeaderParserBuilder),
+			NewTextHeaderParserBuilder(),
+			NewBinaryHeaderParserBuilder(),
+			NewStubHeaderParserBuilder(),
 		},
 	}
 }
