@@ -62,7 +62,7 @@ type FallbackHeaderParser struct {
 }
 
 // NewFallbackHeaderParser create new instance of FallbackHeaderParser
-func NewFallbackHeaderParser(logger Logger, headerParsers []HeaderParser) FallbackHeaderParser {
+func NewFallbackHeaderParser(logger Logger, headerParsers ...HeaderParser) FallbackHeaderParser {
 	return FallbackHeaderParser{
 		Logger:        logger,
 		HeaderParsers: headerParsers,
