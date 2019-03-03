@@ -23,5 +23,5 @@ func (wrapper FallbackLogger) Printf(format string, v ...interface{}) {
 	if nil == wrapper.Logger {
 		return
 	}
-	wrapper.Printf(format, v...)
+	wrapper.Logger.Printf(format, v...)
 }
