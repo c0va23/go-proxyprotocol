@@ -35,6 +35,7 @@ func TestConn_Read(t *testing.T) {
 	t.Run("when header parser return err", func(t *testing.T) {
 		parseErr := errors.New("Parse error")
 		headerParser.EXPECT().Parse(readBuf).Return(nil, parseErr)
+		logger.EXPECT().Printf(gomock.Any(), gomock.Any())
 
 		conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
 
@@ -51,6 +52,14 @@ func TestConn_Read(t *testing.T) {
 		if srcAddr := conn.RemoteAddr(); !reflect.DeepEqual(srcAddr, rawAddr) {
 			t.Errorf("Unexpected remote addr %s", srcAddr)
 		}
+
+		t.Run("when call conn.Read second time", func(t *testing.T) {
+			_, err := conn.Read(buf)
+
+			if err != parseErr {
+				t.Errorf("Unexpected error %s", err)
+			}
+		})
 	})
 
 	t.Run("when header parser return Header", func(t *testing.T) {

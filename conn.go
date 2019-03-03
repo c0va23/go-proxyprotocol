@@ -13,6 +13,7 @@ type Conn struct {
 	logger       Logger
 	readBuf      *bufio.Reader
 	header       *Header
+	headerErr    error
 	headerParser HeaderParser
 	once         sync.Once
 }
@@ -34,15 +35,21 @@ func NewConn(
 	}
 }
 
+func (conn *Conn) parseHeader() {
+	conn.header, conn.headerErr = conn.headerParser.Parse(conn.readBuf)
+	if conn.headerErr != nil {
+		conn.logger.Printf("Header parse error: %s", conn.headerErr)
+	}
+}
+
 // Read proxy to conn.Read
 func (conn *Conn) Read(buf []byte) (int, error) {
-	var err error
-	conn.once.Do(func() {
-		conn.header, err = conn.headerParser.Parse(conn.readBuf)
-	})
-	if nil != err {
-		return 0, err
+	conn.once.Do(conn.parseHeader)
+
+	if nil != conn.headerErr {
+		return 0, conn.headerErr
 	}
+
 	return conn.readBuf.Read(buf)
 }
 
@@ -64,13 +71,7 @@ func (conn *Conn) LocalAddr() net.Addr {
 // RemoteAddr return addr of remote client.
 // If proxyprtocol not local, then return src from header.
 func (conn *Conn) RemoteAddr() net.Addr {
-	conn.once.Do(func() {
-		var err error
-		conn.header, err = conn.headerParser.Parse(conn.readBuf)
-		if nil != err {
-			conn.logger.Printf("Header parse error: %s", err)
-		}
-	})
+	conn.once.Do(conn.parseHeader)
 	if nil != conn.header {
 		return conn.header.SrcAddr
 	}
