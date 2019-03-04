@@ -5,6 +5,7 @@ STATICCHECK_VERSION := 2019.1
 STATICCHECK_URL := https://github.com/dominikh/go-tools/releases/download/$(STATICCHECK_VERSION)/staticcheck_$(GOOS)_$(GOARCH)
 
 export PATH := $(PWD)/bin:$(PATH)
+export GO111MODULE=on
 
 bin/staticcheck_$(STATICCHECK_VERSION):
 	mkdir bin

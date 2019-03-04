@@ -2,6 +2,8 @@
 
 [![GoDoc](https://godoc.org/github.com/c0va23/go-proxyprotocol?status.svg)](https://godoc.org/github.com/c0va23/go-proxyprotocol)
 
+[![Build Status](https://travis-ci.org/c0va23/go-proxyprotocol.svg?branch=master)](https://travis-ci.org/c0va23/go-proxyprotocol)
+
 Golang package `github.com/c0va23/go-proxyprotocol' provide receiver for
 [HA ProxyProtocol v1 and v2](http://www.haproxy.org/download/2.0/doc/proxy-protocol.txt).
 
