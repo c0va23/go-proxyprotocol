@@ -77,6 +77,10 @@ func (conn *Conn) Close() error {
 
 // LocalAddr proxy to conn.LocalAddr
 func (conn *Conn) LocalAddr() net.Addr {
+	conn.once.Do(conn.parseHeader)
+	if nil != conn.header {
+		return conn.header.DstAddr
+	}
 	return conn.conn.LocalAddr()
 }
 

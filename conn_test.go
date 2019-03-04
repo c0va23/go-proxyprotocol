@@ -216,18 +216,46 @@ func TestConn_LocalAddr(t *testing.T) {
 	headerParser := NewMockHeaderParser(mockCtrl)
 	logger := NewMockLogger(mockCtrl)
 
-	conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
-
 	rawAddr := &net.TCPAddr{
 		IP:   net.IPv4(10, 0, 0, 1),
 		Port: 12345,
 	}
-	rawConn.EXPECT().LocalAddr().Return(rawAddr)
+	rawConn.EXPECT().LocalAddr().Return(rawAddr).AnyTimes()
 
-	localAddr := conn.LocalAddr()
-	if localAddr != rawAddr {
-		t.Errorf("Unexpected local addr %s", localAddr)
-	}
+	readBuf := bufio.NewReaderSize(rawConn, 1400)
+
+	t.Run("when header parser return nil header", func(t *testing.T) {
+		conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+		headerParser.EXPECT().Parse(readBuf).Return(nil, nil)
+
+		localAddr := conn.LocalAddr()
+		if localAddr != rawAddr {
+			t.Errorf("Unexpected local addr %s", localAddr)
+		}
+	})
+
+	t.Run("when header parser return not nil header", func(t *testing.T) {
+		conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+		header := &proxyprotocol.Header{
+			DstAddr: &net.TCPAddr{
+				IP:   net.IPv4(1, 2, 3, 4),
+				Port: 12345,
+			},
+		}
+		headerParser.EXPECT().Parse(readBuf).Return(header, nil)
+
+		localAddr := conn.LocalAddr()
+		if localAddr != header.DstAddr {
+			t.Errorf("Unexpected local addr %s", localAddr)
+		}
+
+		t.Run("when second call LocalAddr()", func(t *testing.T) {
+			localAddr := conn.LocalAddr()
+			if localAddr != header.DstAddr {
+				t.Errorf("Unexpected local addr %s", localAddr)
+			}
+		})
+	})
 }
 
 func TestConn_Write(t *testing.T) {
