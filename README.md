@@ -1,7 +1,7 @@
 # go-proxyprotocol
 
 [![GoDoc](https://godoc.org/github.com/c0va23/go-proxyprotocol?status.svg)](https://godoc.org/github.com/c0va23/go-proxyprotocol)
-
+[![Go Report Card](https://goreportcard.com/badge/github.com/c0va23/go-proxyprotocol)](https://goreportcard.com/report/github.com/c0va23/go-proxyprotocol)
 [![Build Status](https://travis-ci.org/c0va23/go-proxyprotocol.svg?branch=master)](https://travis-ci.org/c0va23/go-proxyprotocol)
 
 Golang package `github.com/c0va23/go-proxyprotocol' provide receiver for
