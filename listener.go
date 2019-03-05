@@ -75,11 +75,14 @@ func (listener Listener) Accept() (net.Conn, error) {
 			return nil, err
 		}
 		if !trusted {
+			logger.Printf("Not trusted connection")
 			return rawConn, nil
 		}
 	}
 
 	headerParser := listener.HeaderParserBuilder.Build(logger)
+
+	logger.Printf("Trusted connection")
 
 	return NewConn(rawConn, logger, headerParser), nil
 }

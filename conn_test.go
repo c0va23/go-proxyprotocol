@@ -35,7 +35,7 @@ func TestConn_Read(t *testing.T) {
 	t.Run("when header parser return err", func(t *testing.T) {
 		parseErr := errors.New("Parse error")
 		headerParser.EXPECT().Parse(readBuf).Return(nil, parseErr)
-		logger.EXPECT().Printf(gomock.Any(), gomock.Any())
+		logger.EXPECT().Printf(gomock.Any(), gomock.Any()).AnyTimes()
 
 		conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
 
@@ -138,7 +138,7 @@ func TestConnRemoteAddr(t *testing.T) {
 		parseErr := errors.New("Parse error")
 
 		headerParser.EXPECT().Parse(readBuf).Return(nil, parseErr)
-		logger.EXPECT().Printf(gomock.Any(), gomock.Any())
+		logger.EXPECT().Printf(gomock.Any(), gomock.Any()).AnyTimes()
 
 		remoteAddr := conn.RemoteAddr()
 
@@ -215,6 +215,8 @@ func TestConn_LocalAddr(t *testing.T) {
 
 	headerParser := NewMockHeaderParser(mockCtrl)
 	logger := NewMockLogger(mockCtrl)
+
+	logger.EXPECT().Printf(gomock.Any(), gomock.Any()).AnyTimes()
 
 	rawAddr := &net.TCPAddr{
 		IP:   net.IPv4(10, 0, 0, 1),

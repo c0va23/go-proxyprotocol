@@ -43,7 +43,9 @@ func (conn *Conn) parseHeader() {
 	conn.header, conn.headerErr = conn.headerParser.Parse(conn.readBuf)
 	if conn.headerErr != nil {
 		conn.logger.Printf("Header parse error: %s", conn.headerErr)
+		return
 	}
+	conn.logger.Printf("Header parsed %v", conn.header)
 }
 
 /*
