@@ -68,23 +68,24 @@ func (listener Listener) Accept() (net.Conn, error) {
 	}
 
 	logger := FallbackLogger{Logger: listener.Logger}
+	trusted := true
 	if listener.SourceChecker != nil {
-		trusted, err := listener.SourceChecker(rawConn.RemoteAddr())
+		trusted, err = listener.SourceChecker(rawConn.RemoteAddr())
 		if nil != err {
 			logger.Printf("Source check error: %s", err)
 			return nil, err
 		}
-		if !trusted {
-			logger.Printf("Not trusted connection")
-			return rawConn, nil
-		}
+	}
+
+	if trusted {
+		logger.Printf("Trusted connection")
+	} else {
+		logger.Printf("Not trusted connection")
 	}
 
 	headerParser := listener.HeaderParserBuilder.Build(logger)
 
-	logger.Printf("Trusted connection")
-
-	return NewConn(rawConn, logger, headerParser), nil
+	return NewConn(rawConn, logger, headerParser, trusted), nil
 }
 
 // Close is proxy to listener.Close()

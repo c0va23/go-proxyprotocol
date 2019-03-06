@@ -37,7 +37,8 @@ func TestConn_Read(t *testing.T) {
 		headerParser.EXPECT().Parse(readBuf).Return(nil, parseErr)
 		logger.EXPECT().Printf(gomock.Any(), gomock.Any()).AnyTimes()
 
-		conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+		trustedAddr := true
+		conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
 		n, err := conn.Read(buf)
 
@@ -75,7 +76,8 @@ func TestConn_Read(t *testing.T) {
 			readErr := errors.New("Read error")
 			rawConn.EXPECT().Read(buf).Return(0, readErr)
 
-			conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+			trustedAddr := true
+			conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
 			n, err := conn.Read(buf)
 			if err != readErr {
@@ -95,7 +97,8 @@ func TestConn_Read(t *testing.T) {
 			readSize := 512
 			rawConn.EXPECT().Read(buf).Return(readSize, nil)
 
-			conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+			trustedAddr := true
+			conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
 			n, err := conn.Read(buf)
 
@@ -133,7 +136,8 @@ func TestConnRemoteAddr(t *testing.T) {
 	readBuf := bufio.NewReaderSize(rawConn, 1400)
 
 	t.Run("when header parser return error", func(t *testing.T) {
-		conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+		trustedAddr := true
+		conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
 		parseErr := errors.New("Parse error")
 
@@ -148,26 +152,40 @@ func TestConnRemoteAddr(t *testing.T) {
 	})
 
 	t.Run("when header parser return header", func(t *testing.T) {
-		conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
-
 		header := &proxyprotocol.Header{
 			SrcAddr: &net.TCPAddr{
 				IP: net.IPv4(1, 2, 3, 4),
 			},
 		}
 
-		headerParser.EXPECT().Parse(readBuf).Return(header, nil)
+		headerParser.EXPECT().Parse(readBuf).Return(header, nil).AnyTimes()
 
-		remoteAddr := conn.RemoteAddr()
+		t.Run("when trusted addr", func(t *testing.T) {
+			trustedAddr := true
+			conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
-		if !reflect.DeepEqual(remoteAddr, header.SrcAddr) {
-			t.Errorf("Unexpected remote adder %s", remoteAddr)
-		}
-
-		t.Run("when second call .RemoteAddr()", func(t *testing.T) {
 			remoteAddr := conn.RemoteAddr()
 
 			if !reflect.DeepEqual(remoteAddr, header.SrcAddr) {
+				t.Errorf("Unexpected remote adder %s", remoteAddr)
+			}
+
+			t.Run("when second call .RemoteAddr()", func(t *testing.T) {
+				remoteAddr := conn.RemoteAddr()
+
+				if !reflect.DeepEqual(remoteAddr, header.SrcAddr) {
+					t.Errorf("Unexpected remote adder %s", remoteAddr)
+				}
+			})
+		})
+
+		t.Run("when not trusted addr", func(t *testing.T) {
+			trustedAddr := false
+			conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
+
+			remoteAddr := conn.RemoteAddr()
+
+			if !reflect.DeepEqual(remoteAddr, rawAddr) {
 				t.Errorf("Unexpected remote adder %s", remoteAddr)
 			}
 		})
@@ -183,7 +201,8 @@ func TestConn_Close(t *testing.T) {
 	headerParser := NewMockHeaderParser(mockCtrl)
 	logger := NewMockLogger(mockCtrl)
 
-	conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+	trustedAddr := true
+	conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
 	t.Run("when rawConn.Close() return error", func(t *testing.T) {
 		closeErr := errors.New("Close error")
@@ -227,8 +246,10 @@ func TestConn_LocalAddr(t *testing.T) {
 	readBuf := bufio.NewReaderSize(rawConn, 1400)
 
 	t.Run("when header parser return nil header", func(t *testing.T) {
-		conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
 		headerParser.EXPECT().Parse(readBuf).Return(nil, nil)
+
+		trustedAddr := true
+		conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
 		localAddr := conn.LocalAddr()
 		if localAddr != rawAddr {
@@ -237,14 +258,16 @@ func TestConn_LocalAddr(t *testing.T) {
 	})
 
 	t.Run("when header parser return not nil header", func(t *testing.T) {
-		conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+		trustedAddr := true
+		conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
+
 		header := &proxyprotocol.Header{
 			DstAddr: &net.TCPAddr{
 				IP:   net.IPv4(1, 2, 3, 4),
 				Port: 12345,
 			},
 		}
-		headerParser.EXPECT().Parse(readBuf).Return(header, nil)
+		headerParser.EXPECT().Parse(readBuf).Return(header, nil).AnyTimes()
 
 		localAddr := conn.LocalAddr()
 		if localAddr != header.DstAddr {
@@ -252,10 +275,25 @@ func TestConn_LocalAddr(t *testing.T) {
 		}
 
 		t.Run("when second call LocalAddr()", func(t *testing.T) {
-			localAddr := conn.LocalAddr()
-			if localAddr != header.DstAddr {
-				t.Errorf("Unexpected local addr %s", localAddr)
-			}
+			t.Run("when trusted addr", func(t *testing.T) {
+				trustedAddr := true
+				conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
+
+				localAddr := conn.LocalAddr()
+				if localAddr != header.DstAddr {
+					t.Errorf("Unexpected local addr %s", localAddr)
+				}
+			})
+
+			t.Run("when trusted addr", func(t *testing.T) {
+				trustedAddr := false
+				conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
+
+				localAddr := conn.LocalAddr()
+				if localAddr != rawAddr {
+					t.Errorf("Unexpected local addr %s", localAddr)
+				}
+			})
 		})
 	})
 }
@@ -269,7 +307,8 @@ func TestConn_Write(t *testing.T) {
 	headerParser := NewMockHeaderParser(mockCtrl)
 	logger := NewMockLogger(mockCtrl)
 
-	conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+	trustedAddr := true
+	conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
 	buf := []byte{1, 2, 3, 4, 5}
 
@@ -312,7 +351,8 @@ func TestConn_SetDeadline(t *testing.T) {
 	headerParser := NewMockHeaderParser(mockCtrl)
 	logger := NewMockLogger(mockCtrl)
 
-	conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+	trustedAddr := true
+	conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
 	deadLine := time.Now().Add(time.Second * 15)
 
@@ -347,7 +387,8 @@ func TestConn_SetReadDeadline(t *testing.T) {
 	headerParser := NewMockHeaderParser(mockCtrl)
 	logger := NewMockLogger(mockCtrl)
 
-	conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+	trustedAddr := true
+	conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
 	deadLine := time.Now().Add(time.Second * 15)
 
@@ -382,7 +423,8 @@ func TestConn_SetWriteDeadline(t *testing.T) {
 	headerParser := NewMockHeaderParser(mockCtrl)
 	logger := NewMockLogger(mockCtrl)
 
-	conn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+	trustedAddr := true
+	conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
 	deadLine := time.Now().Add(time.Second * 15)
 

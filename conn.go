@@ -20,6 +20,7 @@ type Conn struct {
 	header       *Header
 	headerErr    error
 	headerParser HeaderParser
+	trustedAddr  bool
 	once         sync.Once
 }
 
@@ -28,6 +29,7 @@ func NewConn(
 	conn net.Conn,
 	logger Logger,
 	headerParser HeaderParser,
+	trustedAddr bool,
 ) net.Conn {
 	readBuf := bufio.NewReaderSize(conn, bufferSize)
 
@@ -36,6 +38,7 @@ func NewConn(
 		readBuf:      readBuf,
 		logger:       logger,
 		headerParser: headerParser,
+		trustedAddr:  trustedAddr,
 	}
 }
 
@@ -80,7 +83,7 @@ func (conn *Conn) Close() error {
 // LocalAddr proxy to conn.LocalAddr
 func (conn *Conn) LocalAddr() net.Addr {
 	conn.once.Do(conn.parseHeader)
-	if nil != conn.header {
+	if conn.trustedAddr && nil != conn.header {
 		return conn.header.DstAddr
 	}
 	return conn.conn.LocalAddr()
@@ -94,7 +97,7 @@ Otherwise return original source address.
 */
 func (conn *Conn) RemoteAddr() net.Addr {
 	conn.once.Do(conn.parseHeader)
-	if nil != conn.header {
+	if conn.trustedAddr && nil != conn.header {
 		return conn.header.SrcAddr
 	}
 	return conn.conn.RemoteAddr()

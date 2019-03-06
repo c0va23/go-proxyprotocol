@@ -161,9 +161,10 @@ func TestListener_Accept(t *testing.T) {
 		}
 		rawConn.EXPECT().RemoteAddr().Return(&remoteAddr).AnyTimes()
 
+		logger := proxyprotocol.FallbackLogger{Logger: listener.Logger}
+		headerParser := NewMockHeaderParser(mockCtrl)
+
 		t.Run("listener not have SourceChecker", func(t *testing.T) {
-			logger := proxyprotocol.FallbackLogger{Logger: listener.Logger}
-			headerParser := NewMockHeaderParser(mockCtrl)
 			builder.EXPECT().Build(logger).Return(headerParser)
 
 			conn, err := listener.Accept()
@@ -172,7 +173,8 @@ func TestListener_Accept(t *testing.T) {
 				t.Errorf("Expect nil error, but got %s", err)
 			}
 
-			expectedConn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+			trustedAddr := true
+			expectedConn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 			if !reflect.DeepEqual(expectedConn, conn) {
 				t.Errorf("Unexpected connection %s", conn)
 			}
@@ -204,12 +206,16 @@ func TestListener_Accept(t *testing.T) {
 				sourceCheckErr = nil
 				sourceCheckResult = false
 
+				builder.EXPECT().Build(logger).Return(headerParser)
+
 				conn, err := listener.Accept()
 				if nil != err {
 					t.Errorf("Unexpected error %s", err)
 				}
 
-				if rawConn != conn {
+				trustedAddr := false
+				expectedConn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
+				if !reflect.DeepEqual(expectedConn, conn) {
 					t.Errorf("Unexpected connection %s", conn)
 				}
 			})
@@ -227,7 +233,8 @@ func TestListener_Accept(t *testing.T) {
 					t.Errorf("Unexpected error %s", err)
 				}
 
-				expectedConn := proxyprotocol.NewConn(rawConn, logger, headerParser)
+				trustedAddr := true
+				expectedConn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 				if !reflect.DeepEqual(expectedConn, conn) {
 					t.Errorf("Unexpected connection %s", conn)
 				}
