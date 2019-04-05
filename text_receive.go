@@ -31,7 +31,7 @@ func NewTextHeaderParser(logger Logger) TextHeaderParser {
 // Parse proxyprotocol v1 header
 func (parser TextHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 	signatureBuf, err := buf.Peek(textSignatureLen)
-	if nil != err {
+	if err != nil {
 		parser.logger.Printf("Read text signature error: %s", err)
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (parser TextHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 	}
 
 	headerLine, err := buf.ReadString(TextLF)
-	if nil != err {
+	if err != nil {
 		parser.logger.Printf("Read header line error: %s", err)
 		return nil, err
 	}
@@ -66,25 +66,25 @@ func (parser TextHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 
 		srcIPStr := addressParts[0]
 		srcIP := net.ParseIP(srcIPStr)
-		if nil == srcIP {
+		if srcIP == nil {
 			return nil, ErrInvalidIP
 		}
 
 		dstIPStr := addressParts[1]
 		dstIP := net.ParseIP(dstIPStr)
-		if nil == dstIP {
+		if dstIP == nil {
 			return nil, ErrInvalidIP
 		}
 
 		srcPortSrt := addressParts[2]
 		srcPort, err := strconv.ParseUint(srcPortSrt, 10, textPortBitSize)
-		if nil != err {
+		if err != nil {
 			return nil, ErrInvalidPort
 		}
 
 		dstPortSrt := addressParts[3]
 		dstPort, err := strconv.ParseUint(dstPortSrt, 10, textPortBitSize)
-		if nil != err {
+		if err != nil {
 			return nil, ErrInvalidPort
 		}
 

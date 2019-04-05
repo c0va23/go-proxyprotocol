@@ -15,7 +15,7 @@ var (
 	ErrUnexpectedAddressLen = errors.New("unexpected address length")
 )
 
-// Meta buffer byte positoin
+// Meta buffer byte position
 const (
 	versionCommandPos  = 0
 	protocolPos        = 1
@@ -37,20 +37,23 @@ func NewBinaryHeaderParser(logger Logger) BinaryHeaderParser {
 
 // Parse buffer
 func (parser BinaryHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
-	magicBuf, err := buf.Peek(BinarySignatueLen)
-	if nil != err {
-		parser.logger.Printf("Read magif prefix error: %s", err)
+	magicBuf, err := buf.Peek(BinarySignatureLen)
+	if err != nil {
+		parser.logger.Printf("Read magic prefix error: %s", err)
 		return nil, err
 	}
 
-	if !bytes.Equal(magicBuf, BinarySignatue) {
+	if !bytes.Equal(magicBuf, BinarySignature) {
 		return nil, ErrInvalidSignature
 	}
 
-	buf.Discard(BinarySignatueLen)
+	_, err = buf.Discard(BinarySignatureLen)
+	if err != nil {
+		return nil, err
+	}
 
 	metaBuf := make([]byte, addressLenEndPos)
-	if _, err = buf.Read(metaBuf); nil != err {
+	if _, err = buf.Read(metaBuf); err != nil {
 		parser.logger.Printf("Read meta error: %s", err)
 		return nil, err
 	}
@@ -67,7 +70,7 @@ func (parser BinaryHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 
 	addressesBuf := make([]byte, addressesLen)
 	addressReaded, err := buf.Read(addressesBuf)
-	if nil != err {
+	if err != nil {
 		parser.logger.Printf("Read address error: %s", err)
 		return nil, err
 	}
@@ -94,19 +97,19 @@ func (parser BinaryHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 	}
 }
 
-func parseAddressData(addressesBuf []byte, IPLen int) (*Header, error) {
-	expectedBufSize := 2 * (IPLen + BinaryPortLen)
+func parseAddressData(addressesBuf []byte, ipLen int) (*Header, error) {
+	expectedBufSize := 2 * (ipLen + BinaryPortLen)
 	if len(addressesBuf) < expectedBufSize {
 		return nil, ErrUnexpectedAddressLen
 	}
 
-	srcIP := make(net.IP, IPLen)
-	copy(srcIP, addressesBuf[:IPLen])
-	addressesBuf = addressesBuf[IPLen:]
+	srcIP := make(net.IP, ipLen)
+	copy(srcIP, addressesBuf[:ipLen])
+	addressesBuf = addressesBuf[ipLen:]
 
-	dstIP := make(net.IP, IPLen)
-	copy(dstIP, addressesBuf[:IPLen])
-	addressesBuf = addressesBuf[IPLen:]
+	dstIP := make(net.IP, ipLen)
+	copy(dstIP, addressesBuf[:ipLen])
+	addressesBuf = addressesBuf[ipLen:]
 
 	srcPort := binary.BigEndian.Uint16(addressesBuf[:BinaryPortLen])
 	addressesBuf = addressesBuf[BinaryPortLen:]
@@ -124,5 +127,4 @@ func parseAddressData(addressesBuf []byte, IPLen int) (*Header, error) {
 			Port: int(dstPort),
 		},
 	}, nil
-
 }

@@ -16,7 +16,7 @@ func main() {
 	flag.Parse()
 
 	rawList, err := net.Listen("tcp", addr)
-	if nil != err {
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -28,7 +28,7 @@ func main() {
 	})
 
 	log.Printf("Start listen on %s", rawList.Addr())
-	if err := http.Serve(list, handler); nil != err {
+	if err := http.Serve(list, handler); err != nil {
 		log.Fatal(err)
 	}
 }

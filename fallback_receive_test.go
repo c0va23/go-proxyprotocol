@@ -112,7 +112,7 @@ func TestFallbackHeaderParser_Parse(t *testing.T) {
 	reader := bytes.NewBufferString("valid header")
 	readBuf := bufio.NewReader(reader)
 
-	parseErr := errors.New("Parse error")
+	parseErr := errors.New("parse error")
 
 	expectedHeader := &proxyprotocol.Header{
 		SrcAddr: &net.TCPAddr{

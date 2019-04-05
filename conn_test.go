@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/c0va23/go-proxyprotocol"
-	gomock "github.com/golang/mock/gomock"
+	"github.com/golang/mock/gomock"
 )
 
 func TestConn_Read(t *testing.T) {
@@ -33,7 +33,7 @@ func TestConn_Read(t *testing.T) {
 	buf := make([]byte, readBuf.Size())
 
 	t.Run("when header parser return err", func(t *testing.T) {
-		parseErr := errors.New("Parse error")
+		parseErr := errors.New("parse error")
 		headerParser.EXPECT().Parse(readBuf).Return(nil, parseErr)
 		logger.EXPECT().Printf(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -73,7 +73,7 @@ func TestConn_Read(t *testing.T) {
 		headerParser.EXPECT().Parse(readBuf).Return(header, nil).AnyTimes()
 
 		t.Run("when rawConn.Read return err", func(t *testing.T) {
-			readErr := errors.New("Read error")
+			readErr := errors.New("read error")
 			rawConn.EXPECT().Read(buf).Return(0, readErr)
 
 			trustedAddr := true
@@ -139,7 +139,7 @@ func TestConnRemoteAddr(t *testing.T) {
 		trustedAddr := true
 		conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
-		parseErr := errors.New("Parse error")
+		parseErr := errors.New("parse error")
 
 		headerParser.EXPECT().Parse(readBuf).Return(nil, parseErr)
 		logger.EXPECT().Printf(gomock.Any(), gomock.Any()).AnyTimes()
@@ -205,7 +205,7 @@ func TestConn_Close(t *testing.T) {
 	conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
 	t.Run("when rawConn.Close() return error", func(t *testing.T) {
-		closeErr := errors.New("Close error")
+		closeErr := errors.New("close error")
 		rawConn.EXPECT().Close().Return(closeErr)
 
 		err := conn.Close()
@@ -313,7 +313,7 @@ func TestConn_Write(t *testing.T) {
 	buf := []byte{1, 2, 3, 4, 5}
 
 	t.Run("when rawConn.Write return error", func(t *testing.T) {
-		writeErr := errors.New("Write error")
+		writeErr := errors.New("write error")
 		rawConn.EXPECT().Write(buf).Return(0, writeErr)
 
 		n, err := conn.Write(buf)

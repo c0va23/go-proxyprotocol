@@ -5,7 +5,7 @@ type Logger interface {
 	Printf(format string, v ...interface{})
 }
 
-// LoggerFunc wrap Printf-like function into proxyptocol.Logger
+// LoggerFunc wrap Printf-like function into proxyprotocol.Logger
 type LoggerFunc func(format string, v ...interface{})
 
 // Printf call inner Printf-link function
@@ -20,7 +20,7 @@ type FallbackLogger struct {
 
 // Printf call Printf on inner logger if it not nil
 func (wrapper FallbackLogger) Printf(format string, v ...interface{}) {
-	if nil == wrapper.Logger {
+	if wrapper.Logger == nil {
 		return
 	}
 	wrapper.Logger.Printf(format, v...)

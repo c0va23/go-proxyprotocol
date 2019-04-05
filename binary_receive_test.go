@@ -4,10 +4,9 @@ import (
 	"encoding/binary"
 	"io"
 	"net"
+	"testing"
 
 	"github.com/c0va23/go-proxyprotocol"
-
-	"testing"
 )
 
 func TestParseV2Header(t *testing.T) {
@@ -22,7 +21,7 @@ func TestParseV2Header(t *testing.T) {
 	})
 
 	t.Run("Invalid signature", func(t *testing.T) {
-		data := make([]byte, proxyprotocol.BinarySignatueLen)
+		data := make([]byte, proxyprotocol.BinarySignatureLen)
 		testParser(t, testParserArgs{
 			headerParser: binaryHeaderParser,
 			data:         data,
@@ -31,7 +30,7 @@ func TestParseV2Header(t *testing.T) {
 	})
 
 	t.Run("meta EOF", func(t *testing.T) {
-		data := append(proxyprotocol.BinarySignatue)
+		data := append(proxyprotocol.BinarySignature)
 		testParser(t, testParserArgs{
 			headerParser: binaryHeaderParser,
 			data:         data,
@@ -40,8 +39,8 @@ func TestParseV2Header(t *testing.T) {
 	})
 
 	t.Run("Invalid version", func(t *testing.T) {
-		invalidVersoin := byte(0x00)
-		data := append(proxyprotocol.BinarySignatue, invalidVersoin)
+		invalidVersion := byte(0x00)
+		data := append(proxyprotocol.BinarySignature, invalidVersion)
 		testParser(t, testParserArgs{
 			headerParser: binaryHeaderParser,
 			data:         data,
@@ -52,7 +51,7 @@ func TestParseV2Header(t *testing.T) {
 	t.Run("Invalid command", func(t *testing.T) {
 		invalidCommand := proxyprotocol.BinaryVersion2&proxyprotocol.BinaryVersionMask | proxyprotocol.BinaryCommandMask&0xFF
 		t.Logf("Version command bits: %02x", invalidCommand)
-		data := append(proxyprotocol.BinarySignatue, invalidCommand)
+		data := append(proxyprotocol.BinarySignature, invalidCommand)
 		testParser(t, testParserArgs{
 			headerParser: binaryHeaderParser,
 			data:         data,
@@ -61,9 +60,9 @@ func TestParseV2Header(t *testing.T) {
 	})
 
 	t.Run("Local command", func(t *testing.T) {
-		commandVerison := proxyprotocol.BinaryCommandLocal | proxyprotocol.BinaryVersion2
+		commandVersion := proxyprotocol.BinaryCommandLocal | proxyprotocol.BinaryVersion2
 		protocol := proxyprotocol.BinaryProtocolUnspec
-		data := append(proxyprotocol.BinarySignatue, commandVerison, protocol, 0, 0)
+		data := append(proxyprotocol.BinarySignature, commandVersion, protocol, 0, 0)
 		testParser(t, testParserArgs{
 			headerParser: binaryHeaderParser,
 			data:         data,
@@ -74,7 +73,7 @@ func TestParseV2Header(t *testing.T) {
 	})
 
 	t.Run("Local command with TLV", func(t *testing.T) {
-		commandVerison := proxyprotocol.BinaryCommandLocal | proxyprotocol.BinaryVersion2
+		commandVersion := proxyprotocol.BinaryCommandLocal | proxyprotocol.BinaryVersion2
 		protocol := proxyprotocol.BinaryProtocolUnspec
 
 		tlvData := []byte{proxyprotocol.TLVTypeNoop, 0, 0}
@@ -84,7 +83,7 @@ func TestParseV2Header(t *testing.T) {
 
 		t.Logf("Address len: %v", addressLen)
 
-		data := append(proxyprotocol.BinarySignatue, commandVerison, protocol)
+		data := append(proxyprotocol.BinarySignature, commandVersion, protocol)
 		data = append(data, addressLen...)
 		data = append(data, tlvData...)
 
@@ -98,9 +97,9 @@ func TestParseV2Header(t *testing.T) {
 	})
 
 	t.Run("Invalid protocol", func(t *testing.T) {
-		commandVerison := proxyprotocol.BinaryCommandProxy | proxyprotocol.BinaryVersion2
+		commandVersion := proxyprotocol.BinaryCommandProxy | proxyprotocol.BinaryVersion2
 		invalidProtocol := byte(0xFF)
-		data := append(proxyprotocol.BinarySignatue, commandVerison, invalidProtocol, 0, 0)
+		data := append(proxyprotocol.BinarySignature, commandVersion, invalidProtocol, 0, 0)
 		testParser(t, testParserArgs{
 			headerParser: binaryHeaderParser,
 			data:         data,
@@ -110,8 +109,8 @@ func TestParseV2Header(t *testing.T) {
 	})
 
 	t.Run("Unspec protocol", func(t *testing.T) {
-		commandVerison := proxyprotocol.BinaryCommandProxy | proxyprotocol.BinaryVersion2
-		data := append(proxyprotocol.BinarySignatue, commandVerison, proxyprotocol.BinaryProtocolUnspec, 0, 0)
+		commandVersion := proxyprotocol.BinaryCommandProxy | proxyprotocol.BinaryVersion2
+		data := append(proxyprotocol.BinarySignature, commandVersion, proxyprotocol.BinaryProtocolUnspec, 0, 0)
 		testParser(t, testParserArgs{
 			headerParser: binaryHeaderParser,
 			data:         data,
@@ -122,8 +121,8 @@ func TestParseV2Header(t *testing.T) {
 	})
 
 	t.Run("TCPv4 protocol", func(t *testing.T) {
-		commandVerison := proxyprotocol.BinaryCommandProxy | proxyprotocol.BinaryVersion2
-		data := append(proxyprotocol.BinarySignatue, commandVerison, proxyprotocol.BinaryProtocolTCPoverIPv4)
+		commandVersion := proxyprotocol.BinaryCommandProxy | proxyprotocol.BinaryVersion2
+		data := append(proxyprotocol.BinarySignature, commandVersion, proxyprotocol.BinaryProtocolTCPoverIPv4)
 
 		t.Run("Invalid address size", func(t *testing.T) {
 			data := append(data, 0, 0)
@@ -186,8 +185,8 @@ func TestParseV2Header(t *testing.T) {
 	})
 
 	t.Run("TCPv6 protocol", func(t *testing.T) {
-		commandVerison := proxyprotocol.BinaryCommandProxy | proxyprotocol.BinaryVersion2
-		data := append(proxyprotocol.BinarySignatue, commandVerison, proxyprotocol.BinaryProtocolTCPoverIPv6)
+		commandVersion := proxyprotocol.BinaryCommandProxy | proxyprotocol.BinaryVersion2
+		data := append(proxyprotocol.BinarySignature, commandVersion, proxyprotocol.BinaryProtocolTCPoverIPv6)
 
 		t.Run("Invalid address size", func(t *testing.T) {
 			data := append(data, 0, 0)
