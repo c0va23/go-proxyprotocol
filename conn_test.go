@@ -6,7 +6,6 @@ import (
 	"net"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/c0va23/go-proxyprotocol"
 	"github.com/golang/mock/gomock"
@@ -117,7 +116,7 @@ func TestConn_Read(t *testing.T) {
 	})
 }
 
-func TestConnRemoteAddr(t *testing.T) {
+func TestConn_RemoteAddr(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -192,40 +191,6 @@ func TestConnRemoteAddr(t *testing.T) {
 	})
 }
 
-func TestConn_Close(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	rawConn := NewMockConn(mockCtrl)
-
-	headerParser := NewMockHeaderParser(mockCtrl)
-	logger := NewMockLogger(mockCtrl)
-
-	trustedAddr := true
-	conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
-
-	t.Run("when rawConn.Close() return error", func(t *testing.T) {
-		closeErr := errors.New("close error")
-		rawConn.EXPECT().Close().Return(closeErr)
-
-		err := conn.Close()
-
-		if err != closeErr {
-			t.Errorf("Unexpected error %s", err)
-		}
-	})
-
-	t.Run("when rawConn.Close() return nil", func(t *testing.T) {
-		rawConn.EXPECT().Close().Return(nil)
-
-		err := conn.Close()
-
-		if err != nil {
-			t.Errorf("Unexpected error %s", err)
-		}
-	})
-}
-
 func TestConn_LocalAddr(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -295,157 +260,5 @@ func TestConn_LocalAddr(t *testing.T) {
 				}
 			})
 		})
-	})
-}
-
-func TestConn_Write(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	rawConn := NewMockConn(mockCtrl)
-
-	headerParser := NewMockHeaderParser(mockCtrl)
-	logger := NewMockLogger(mockCtrl)
-
-	trustedAddr := true
-	conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
-
-	buf := []byte{1, 2, 3, 4, 5}
-
-	t.Run("when rawConn.Write return error", func(t *testing.T) {
-		writeErr := errors.New("write error")
-		rawConn.EXPECT().Write(buf).Return(0, writeErr)
-
-		n, err := conn.Write(buf)
-		if err != writeErr {
-			t.Errorf("Unexpected error %s", err)
-		}
-
-		if n != 0 {
-			t.Errorf("Unexpected write size")
-		}
-	})
-
-	t.Run("when rawConn.Write return write size", func(t *testing.T) {
-		writeSize := len(buf)
-		rawConn.EXPECT().Write(buf).Return(writeSize, nil)
-
-		n, err := conn.Write(buf)
-
-		if err != nil {
-			t.Errorf("Unexpected error %s", err)
-		}
-
-		if n != writeSize {
-			t.Errorf("Unexpected write size")
-		}
-	})
-}
-
-func TestConn_SetDeadline(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	rawConn := NewMockConn(mockCtrl)
-
-	headerParser := NewMockHeaderParser(mockCtrl)
-	logger := NewMockLogger(mockCtrl)
-
-	trustedAddr := true
-	conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
-
-	deadLine := time.Now().Add(time.Second * 15)
-
-	t.Run("when rawConn.SetDeadline return error", func(t *testing.T) {
-		deadLineErr := errors.New("DeadLine error")
-		rawConn.EXPECT().SetDeadline(deadLine).Return(deadLineErr)
-
-		err := conn.SetDeadline(deadLine)
-
-		if err != deadLineErr {
-			t.Errorf("Unexpected error %s", err)
-		}
-	})
-
-	t.Run("when rawConn.SetDeadline return nil", func(t *testing.T) {
-		rawConn.EXPECT().SetDeadline(deadLine).Return(nil)
-
-		err := conn.SetDeadline(deadLine)
-
-		if err != nil {
-			t.Errorf("Unexpected error %s", err)
-		}
-	})
-}
-
-func TestConn_SetReadDeadline(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	rawConn := NewMockConn(mockCtrl)
-
-	headerParser := NewMockHeaderParser(mockCtrl)
-	logger := NewMockLogger(mockCtrl)
-
-	trustedAddr := true
-	conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
-
-	deadLine := time.Now().Add(time.Second * 15)
-
-	t.Run("when rawConn.SetReadDeadline return error", func(t *testing.T) {
-		deadLineErr := errors.New("ReadDeadLine error")
-		rawConn.EXPECT().SetReadDeadline(deadLine).Return(deadLineErr)
-
-		err := conn.SetReadDeadline(deadLine)
-
-		if err != deadLineErr {
-			t.Errorf("Unexpected error %s", err)
-		}
-	})
-
-	t.Run("when rawConn.SetReadDeadline return nil", func(t *testing.T) {
-		rawConn.EXPECT().SetReadDeadline(deadLine).Return(nil)
-
-		err := conn.SetReadDeadline(deadLine)
-
-		if err != nil {
-			t.Errorf("Unexpected error %s", err)
-		}
-	})
-}
-
-func TestConn_SetWriteDeadline(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	rawConn := NewMockConn(mockCtrl)
-
-	headerParser := NewMockHeaderParser(mockCtrl)
-	logger := NewMockLogger(mockCtrl)
-
-	trustedAddr := true
-	conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
-
-	deadLine := time.Now().Add(time.Second * 15)
-
-	t.Run("when rawConn.SetWriteDeadline return error", func(t *testing.T) {
-		deadLineErr := errors.New("WriteDeadLine error")
-		rawConn.EXPECT().SetWriteDeadline(deadLine).Return(deadLineErr)
-
-		err := conn.SetWriteDeadline(deadLine)
-
-		if err != deadLineErr {
-			t.Errorf("Unexpected error %s", err)
-		}
-	})
-
-	t.Run("when rawConn.SetWriteDeadline return nil", func(t *testing.T) {
-		rawConn.EXPECT().SetWriteDeadline(deadLine).Return(nil)
-
-		err := conn.SetWriteDeadline(deadLine)
-
-		if err != nil {
-			t.Errorf("Unexpected error %s", err)
-		}
 	})
 }

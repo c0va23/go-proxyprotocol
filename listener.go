@@ -10,10 +10,7 @@ const bufferSize = 1400
 type SourceChecker func(net.Addr) (bool, error)
 
 // NewListener construct Listener
-func NewListener(
-	listener net.Listener,
-	headerParserBuilder HeaderParserBuilder,
-) Listener {
+func NewListener(listener net.Listener, headerParserBuilder HeaderParserBuilder) Listener {
 	return Listener{
 		Listener:            listener,
 		HeaderParserBuilder: headerParserBuilder,
@@ -37,9 +34,7 @@ func (listener Listener) WithLogger(logger Logger) Listener {
 
 // WithHeaderParserBuilder copy Listener and set HeaderParserBuilder.
 // Can be used to disable or reorder HeaderParser's.
-func (listener Listener) WithHeaderParserBuilder(
-	headerParserBuilder HeaderParserBuilder,
-) Listener {
+func (listener Listener) WithHeaderParserBuilder(headerParserBuilder HeaderParserBuilder) Listener {
 	newListener := listener
 	newListener.HeaderParserBuilder = headerParserBuilder
 	return newListener
@@ -84,14 +79,4 @@ func (listener Listener) Accept() (net.Conn, error) {
 	headerParser := listener.HeaderParserBuilder.Build(logger)
 
 	return NewConn(rawConn, logger, headerParser, trusted), nil
-}
-
-// Close is proxy to listener.Close()
-func (listener Listener) Close() error {
-	return listener.Listener.Close()
-}
-
-// Addr is proxy to listener.Addr()
-func (listener Listener) Addr() net.Addr {
-	return listener.Listener.Addr()
 }

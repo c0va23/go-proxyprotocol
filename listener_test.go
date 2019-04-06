@@ -87,46 +87,6 @@ func TestListener_WithHeaderParserBuilder(t *testing.T) {
 	}
 }
 
-func TestListener_Close(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	rawListener := NewMockListener(mockCtrl)
-
-	builder := NewMockHeaderParserBuilder(mockCtrl)
-	listener := proxyprotocol.NewListener(rawListener, builder)
-
-	expectedErr := errors.New("closer error")
-	rawListener.EXPECT().Close().Return(expectedErr)
-
-	err := listener.Close()
-	if expectedErr != err {
-		t.Errorf("Unexpected close result. Expect %s, got %s", expectedErr, err)
-	}
-}
-
-func TestListener_Addr(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	rawListener := NewMockListener(mockCtrl)
-
-	builder := NewMockHeaderParserBuilder(mockCtrl)
-	listener := proxyprotocol.NewListener(rawListener, builder)
-
-	expectedAddr := &net.TCPAddr{
-		IP:   net.IPv4(1, 2, 3, 4),
-		Port: 8080,
-	}
-
-	rawListener.EXPECT().Addr().Return(expectedAddr)
-
-	addr, ok := listener.Addr().(*net.TCPAddr)
-	if !ok || !expectedAddr.IP.Equal(addr.IP) || expectedAddr.Port != addr.Port {
-		t.Errorf("Unexpected addr result. Expect %s, got %s", expectedAddr, addr)
-	}
-}
-
 func TestListener_Accept(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()

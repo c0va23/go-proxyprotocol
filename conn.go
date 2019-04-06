@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"net"
 	"sync"
-	"time"
 )
 
 // Conn is wrapper on net.Conn with RemoteAddr() override.
@@ -12,7 +11,7 @@ import (
 // On first call Read() or RemoteAddr() parse proxyprotocol header and store
 // local and remote addresses.
 type Conn struct {
-	conn         net.Conn
+	net.Conn
 	logger       Logger
 	readBuf      *bufio.Reader
 	header       *Header
@@ -27,7 +26,7 @@ func NewConn(conn net.Conn, logger Logger, headerParser HeaderParser, trustedAdd
 	readBuf := bufio.NewReaderSize(conn, bufferSize)
 
 	return &Conn{
-		conn:         conn,
+		Conn:         conn,
 		readBuf:      readBuf,
 		logger:       logger,
 		headerParser: headerParser,
@@ -61,23 +60,15 @@ func (conn *Conn) Read(buf []byte) (int, error) {
 	return conn.readBuf.Read(buf)
 }
 
-// Write proxy to conn.Write
-func (conn *Conn) Write(buf []byte) (int, error) {
-	return conn.conn.Write(buf)
-}
-
-// Close proxy to conn.Close
-func (conn *Conn) Close() error {
-	return conn.conn.Close()
-}
-
 // LocalAddr proxy to conn.LocalAddr
 func (conn *Conn) LocalAddr() net.Addr {
 	conn.once.Do(conn.parseHeader)
+
 	if conn.trustedAddr && conn.header != nil {
 		return conn.header.DstAddr
 	}
-	return conn.conn.LocalAddr()
+
+	return conn.Conn.LocalAddr()
 }
 
 // RemoteAddr on first call parse proxyprotocol header.
@@ -86,23 +77,10 @@ func (conn *Conn) LocalAddr() net.Addr {
 // Otherwise return original source address.
 func (conn *Conn) RemoteAddr() net.Addr {
 	conn.once.Do(conn.parseHeader)
+
 	if conn.trustedAddr && conn.header != nil {
 		return conn.header.SrcAddr
 	}
-	return conn.conn.RemoteAddr()
-}
 
-// SetDeadline proxy to conn.SetDeadline
-func (conn *Conn) SetDeadline(t time.Time) error {
-	return conn.conn.SetDeadline(t)
-}
-
-// SetReadDeadline proxy to conn.SetReadDeadline
-func (conn *Conn) SetReadDeadline(t time.Time) error {
-	return conn.conn.SetReadDeadline(t)
-}
-
-// SetWriteDeadline  proxy to conn.SetWriteDeadline
-func (conn *Conn) SetWriteDeadline(t time.Time) error {
-	return conn.conn.SetWriteDeadline(t)
+	return conn.Conn.RemoteAddr()
 }
