@@ -250,7 +250,7 @@ func TestConn_LocalAddr(t *testing.T) {
 				}
 			})
 
-			t.Run("when trusted addr", func(t *testing.T) {
+			t.Run("when not trusted addr", func(t *testing.T) {
 				trustedAddr := false
 				conn := proxyprotocol.NewConn(rawConn, logger, headerParser, trustedAddr)
 
