@@ -7,6 +7,8 @@ STATICCHECK_URL := https://github.com/dominikh/go-tools/releases/download/$(STAT
 export PATH := $(PWD)/bin:$(PATH)
 export GO111MODULE=on
 
+default: lint test
+
 bin/staticcheck_$(STATICCHECK_VERSION):
 	mkdir bin
 	curl -o $@ -L $(STATICCHECK_URL)
