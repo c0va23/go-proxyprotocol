@@ -11,7 +11,6 @@ import (
 )
 
 type testParserArgs struct {
-	desc         string
 	headerParser proxyprotocol.HeaderParser
 	data         []byte
 	header       *proxyprotocol.Header
