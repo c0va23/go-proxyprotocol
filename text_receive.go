@@ -59,46 +59,50 @@ func (parser TextHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 	case TextProtocolUnknown:
 		return nil, nil
 	case TextProtocolIPv4, TextProtocolIPv6:
-		addressParts := headerParts[2:]
-		if textAddressPartsLen != len(addressParts) {
-			return nil, ErrInvalidAddressList
-		}
-
-		srcIPStr := addressParts[0]
-		srcIP := net.ParseIP(srcIPStr)
-		if srcIP == nil {
-			return nil, ErrInvalidIP
-		}
-
-		dstIPStr := addressParts[1]
-		dstIP := net.ParseIP(dstIPStr)
-		if dstIP == nil {
-			return nil, ErrInvalidIP
-		}
-
-		srcPortSrt := addressParts[2]
-		srcPort, err := strconv.ParseUint(srcPortSrt, 10, textPortBitSize)
-		if err != nil {
-			return nil, ErrInvalidPort
-		}
-
-		dstPortSrt := addressParts[3]
-		dstPort, err := strconv.ParseUint(dstPortSrt, 10, textPortBitSize)
-		if err != nil {
-			return nil, ErrInvalidPort
-		}
-
-		return &Header{
-			SrcAddr: &net.TCPAddr{
-				IP:   srcIP,
-				Port: int(srcPort),
-			},
-			DstAddr: &net.TCPAddr{
-				IP:   dstIP,
-				Port: int(dstPort),
-			},
-		}, nil
+		return parseTextHeader(headerParts)
 	default:
 		return nil, ErrUnknownProtocol
 	}
+}
+
+func parseTextHeader(headerParts []string) (*Header, error) {
+	addressParts := headerParts[2:]
+	if textAddressPartsLen != len(addressParts) {
+		return nil, ErrInvalidAddressList
+	}
+
+	srcIPStr := addressParts[0]
+	srcIP := net.ParseIP(srcIPStr)
+	if srcIP == nil {
+		return nil, ErrInvalidIP
+	}
+
+	dstIPStr := addressParts[1]
+	dstIP := net.ParseIP(dstIPStr)
+	if dstIP == nil {
+		return nil, ErrInvalidIP
+	}
+
+	srcPortSrt := addressParts[2]
+	srcPort, err := strconv.ParseUint(srcPortSrt, 10, textPortBitSize)
+	if err != nil {
+		return nil, ErrInvalidPort
+	}
+
+	dstPortSrt := addressParts[3]
+	dstPort, err := strconv.ParseUint(dstPortSrt, 10, textPortBitSize)
+	if err != nil {
+		return nil, ErrInvalidPort
+	}
+
+	return &Header{
+		SrcAddr: &net.TCPAddr{
+			IP:   srcIP,
+			Port: int(srcPort),
+		},
+		DstAddr: &net.TCPAddr{
+			IP:   dstIP,
+			Port: int(dstPort),
+		},
+	}, nil
 }

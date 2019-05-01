@@ -78,22 +78,24 @@ func (parser BinaryHeaderParser) Parse(buf *bufio.Reader) (*Header, error) {
 
 	switch versionCommandByte & BinaryCommandMask {
 	case BinaryCommandProxy:
-		protocol := metaBuf[protocolPos]
-
-		switch protocol & BinaryAFMask {
-		case BinaryProtocolUnspec:
-			return nil, nil
-		case BinaryAFInet:
-			return parseAddressData(addressesBuf, net.IPv4len)
-		case BinaryAFInet6:
-			return parseAddressData(addressesBuf, net.IPv6len)
-		default:
-			return nil, ErrUnknownProtocol
-		}
+		return parserBinaryCommandHeader(metaBuf[protocolPos], addressesBuf)
 	case BinaryCommandLocal:
 		return nil, nil
 	default:
 		return nil, ErrUnknownCommand
+	}
+}
+
+func parserBinaryCommandHeader(protocol byte, addressesBuf []byte) (*Header, error) {
+	switch protocol & BinaryAFMask {
+	case BinaryProtocolUnspec:
+		return nil, nil
+	case BinaryAFInet:
+		return parseAddressData(addressesBuf, net.IPv4len)
+	case BinaryAFInet6:
+		return parseAddressData(addressesBuf, net.IPv6len)
+	default:
+		return nil, ErrUnknownProtocol
 	}
 }
 
