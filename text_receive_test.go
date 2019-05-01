@@ -78,46 +78,46 @@ func TestParseTextHeader(t *testing.T) {
 		data = append(data, []byte(proxyprotocol.TextProtocolIPv4)...)
 
 		t.Run("invalid address parts", func(t *testing.T) {
-			data := buildTextHeader(data, "192.168.1.2", "192.168.1.3")
+			invalidData := buildTextHeader(data, "192.168.1.2", "192.168.1.3")
 			testParser(t, testParserArgs{
 				headerParser: textHeaderParser,
-				data:         data,
+				data:         invalidData,
 				err:          proxyprotocol.ErrInvalidAddressList,
 			})
 		})
 
 		t.Run("invalid src IP", func(t *testing.T) {
-			data := buildTextHeader(data, "192.168.1", "192.168.1.3", "1080", "12345")
+			invlaidData := buildTextHeader(data, "192.168.1", "192.168.1.3", "1080", "12345")
 			testParser(t, testParserArgs{
 				headerParser: textHeaderParser,
-				data:         data,
+				data:         invlaidData,
 				err:          proxyprotocol.ErrInvalidIP,
 			})
 		})
 
 		t.Run("invalid src port", func(t *testing.T) {
-			data := buildTextHeader(data, "192.168.1.1", "192.168.1.3", "808080", "12345")
+			invalidData := buildTextHeader(data, "192.168.1.1", "192.168.1.3", "808080", "12345")
 			testParser(t, testParserArgs{
 				headerParser: textHeaderParser,
-				data:         data,
+				data:         invalidData,
 				err:          proxyprotocol.ErrInvalidPort,
 			})
 		})
 
 		t.Run("invalid dst IP", func(t *testing.T) {
-			data := buildTextHeader(data, "192.168.1.1", "192.168.1", "1080", "12345")
+			invalidData := buildTextHeader(data, "192.168.1.1", "192.168.1", "1080", "12345")
 			testParser(t, testParserArgs{
 				headerParser: textHeaderParser,
-				data:         data,
+				data:         invalidData,
 				err:          proxyprotocol.ErrInvalidIP,
 			})
 		})
 
 		t.Run("invalid dst port", func(t *testing.T) {
-			data := buildTextHeader(data, "192.168.1.1", "192.168.1.3", "1080", "123456")
+			invalidData := buildTextHeader(data, "192.168.1.1", "192.168.1.3", "1080", "123456")
 			testParser(t, testParserArgs{
 				headerParser: textHeaderParser,
-				data:         data,
+				data:         invalidData,
 				err:          proxyprotocol.ErrInvalidPort,
 			})
 		})
@@ -140,10 +140,10 @@ func TestParseTextHeader(t *testing.T) {
 				},
 			}
 
-			data := buildTextHeader(data, srcAddr.String(), dstAddr.String(), strconv.Itoa(srcPort), strconv.Itoa(dstPort))
+			validData := buildTextHeader(data, srcAddr.String(), dstAddr.String(), strconv.Itoa(srcPort), strconv.Itoa(dstPort))
 			testParser(t, testParserArgs{
 				headerParser: textHeaderParser,
-				data:         data,
+				data:         validData,
 				header:       &expectedHeader,
 			})
 		})
@@ -154,46 +154,46 @@ func TestParseTextHeader(t *testing.T) {
 		data = append(data, []byte(proxyprotocol.TextProtocolIPv6)...)
 
 		t.Run("invalid address parts", func(t *testing.T) {
-			data := buildTextHeader(data, "::1", "::2")
+			invalidData := buildTextHeader(data, "::1", "::2")
 			testParser(t, testParserArgs{
 				headerParser: textHeaderParser,
-				data:         data,
+				data:         invalidData,
 				err:          proxyprotocol.ErrInvalidAddressList,
 			})
 		})
 
 		t.Run("invalid src IP", func(t *testing.T) {
-			data := buildTextHeader(data, "::ZZ", "::2", "1080", "12345")
+			invalidData := buildTextHeader(data, "::ZZ", "::2", "1080", "12345")
 			testParser(t, testParserArgs{
 				headerParser: textHeaderParser,
-				data:         data,
+				data:         invalidData,
 				err:          proxyprotocol.ErrInvalidIP,
 			})
 		})
 
 		t.Run("invalid src port", func(t *testing.T) {
-			data := buildTextHeader(data, "::1", "::2", "808080", "12345")
+			invlaidData := buildTextHeader(data, "::1", "::2", "808080", "12345")
 			testParser(t, testParserArgs{
 				headerParser: textHeaderParser,
-				data:         data,
+				data:         invlaidData,
 				err:          proxyprotocol.ErrInvalidPort,
 			})
 		})
 
 		t.Run("invalid dst IP", func(t *testing.T) {
-			data := buildTextHeader(data, "::1", "::ZZ", "1080", "12345")
+			invalidData := buildTextHeader(data, "::1", "::ZZ", "1080", "12345")
 			testParser(t, testParserArgs{
 				headerParser: textHeaderParser,
-				data:         data,
+				data:         invalidData,
 				err:          proxyprotocol.ErrInvalidIP,
 			})
 		})
 
 		t.Run("invalid dst port", func(t *testing.T) {
-			data := buildTextHeader(data, "::1", "::2", "1080", "123456")
+			invalidData := buildTextHeader(data, "::1", "::2", "1080", "123456")
 			testParser(t, testParserArgs{
 				headerParser: textHeaderParser,
-				data:         data,
+				data:         invalidData,
 				err:          proxyprotocol.ErrInvalidPort,
 			})
 		})
@@ -216,10 +216,10 @@ func TestParseTextHeader(t *testing.T) {
 				},
 			}
 
-			data := buildTextHeader(data, srcAddr.String(), dstAddr.String(), strconv.Itoa(srcPort), strconv.Itoa(dstPort))
+			validData := buildTextHeader(data, srcAddr.String(), dstAddr.String(), strconv.Itoa(srcPort), strconv.Itoa(dstPort))
 			testParser(t, testParserArgs{
 				headerParser: textHeaderParser,
-				data:         data,
+				data:         validData,
 				header:       &expectedHeader,
 			})
 		})
