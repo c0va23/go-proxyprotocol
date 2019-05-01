@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/c0va23/go-proxyprotocol"
-	gomock "github.com/golang/mock/gomock"
+	"github.com/golang/mock/gomock"
 )
 
 func TestNewListener(t *testing.T) {
@@ -87,46 +87,6 @@ func TestListener_WithHeaderParserBuilder(t *testing.T) {
 	}
 }
 
-func TestListener_Close(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	rawListener := NewMockListener(mockCtrl)
-
-	builder := NewMockHeaderParserBuilder(mockCtrl)
-	listener := proxyprotocol.NewListener(rawListener, builder)
-
-	expectedErr := errors.New("Closer error")
-	rawListener.EXPECT().Close().Return(expectedErr)
-
-	err := listener.Close()
-	if expectedErr != err {
-		t.Errorf("Unexpected close result. Expect %s, got %s", expectedErr, err)
-	}
-}
-
-func TestListener_Addr(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	rawListener := NewMockListener(mockCtrl)
-
-	builder := NewMockHeaderParserBuilder(mockCtrl)
-	listener := proxyprotocol.NewListener(rawListener, builder)
-
-	expectedAddr := &net.TCPAddr{
-		IP:   net.IPv4(1, 2, 3, 4),
-		Port: 8080,
-	}
-
-	rawListener.EXPECT().Addr().Return(expectedAddr)
-
-	addr, ok := listener.Addr().(*net.TCPAddr)
-	if !ok || !expectedAddr.IP.Equal(addr.IP) || expectedAddr.Port != addr.Port {
-		t.Errorf("Unexpected addr result. Expect %s, got %s", expectedAddr, addr)
-	}
-}
-
 func TestListener_Accept(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -137,12 +97,12 @@ func TestListener_Accept(t *testing.T) {
 	listener := proxyprotocol.NewListener(rawListener, builder)
 
 	t.Run("when raw listener accept return error", func(t *testing.T) {
-		acceptErr := errors.New("Accept error")
+		acceptErr := errors.New("accept error")
 		rawListener.EXPECT().Accept().Return(nil, acceptErr)
 
 		conn, err := listener.Accept()
 
-		if nil != conn {
+		if conn != nil {
 			t.Errorf("Expect nil conn, but got %s", conn)
 		}
 
@@ -151,7 +111,7 @@ func TestListener_Accept(t *testing.T) {
 		}
 	})
 
-	t.Run("when raw listner accept return connection", func(t *testing.T) {
+	t.Run("when raw listener accept return connection", func(t *testing.T) {
 		rawConn := NewMockConn(mockCtrl)
 		rawListener.EXPECT().Accept().Return(rawConn, nil).AnyTimes()
 
@@ -168,8 +128,7 @@ func TestListener_Accept(t *testing.T) {
 			builder.EXPECT().Build(logger).Return(headerParser)
 
 			conn, err := listener.Accept()
-
-			if nil != err {
+			if err != nil {
 				t.Errorf("Expect nil error, but got %s", err)
 			}
 
@@ -189,7 +148,7 @@ func TestListener_Accept(t *testing.T) {
 			listener = listener.WithSourceChecker(sourceChecker)
 
 			t.Run("source checker return error", func(t *testing.T) {
-				sourceCheckErr = errors.New("Source check err")
+				sourceCheckErr = errors.New("source check err")
 				sourceCheckResult = false
 
 				conn, err := listener.Accept()
@@ -197,7 +156,7 @@ func TestListener_Accept(t *testing.T) {
 					t.Errorf("Unexpected error %s", err)
 				}
 
-				if nil != conn {
+				if conn != nil {
 					t.Errorf("Unexpeced connection %s", conn)
 				}
 			})
@@ -209,7 +168,7 @@ func TestListener_Accept(t *testing.T) {
 				builder.EXPECT().Build(logger).Return(headerParser)
 
 				conn, err := listener.Accept()
-				if nil != err {
+				if err != nil {
 					t.Errorf("Unexpected error %s", err)
 				}
 
@@ -229,7 +188,7 @@ func TestListener_Accept(t *testing.T) {
 				builder.EXPECT().Build(logger).Return(headerParser)
 
 				conn, err := listener.Accept()
-				if nil != err {
+				if err != nil {
 					t.Errorf("Unexpected error %s", err)
 				}
 

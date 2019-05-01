@@ -1,9 +1,9 @@
 package proxyprotocol
 
-// BinarySignatue is maigc prefix for proxyprtocol Binary
+// BinarySignature is magic prefix for proxyprotocol Binary
 var (
-	BinarySignatue    = []byte{0x0D, 0x0A, 0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A}
-	BinarySignatueLen = len(BinarySignatue)
+	BinarySignature    = []byte{0x0D, 0x0A, 0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A}
+	BinarySignatureLen = len(BinarySignature)
 )
 
 // BinaryVersion2 bits

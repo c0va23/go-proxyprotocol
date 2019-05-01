@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	proxyprotocol "github.com/c0va23/go-proxyprotocol"
+	"github.com/c0va23/go-proxyprotocol"
 )
 
 type testParserArgs struct {
@@ -18,10 +18,7 @@ type testParserArgs struct {
 	readAll      bool
 }
 
-func testParser(
-	t *testing.T,
-	args testParserArgs,
-) {
+func testParser(t *testing.T, args testParserArgs) {
 	buf := bufio.NewReader(bytes.NewBuffer(args.data))
 	header, err := args.headerParser.Parse(buf)
 

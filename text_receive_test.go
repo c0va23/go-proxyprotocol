@@ -4,10 +4,9 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"testing"
 
 	"github.com/c0va23/go-proxyprotocol"
-
-	"testing"
 )
 
 func buildTextHeader(prefix []byte, parts ...string) []byte {
@@ -24,7 +23,7 @@ func TestParseTextHeader(t *testing.T) {
 	logger := proxyprotocol.LoggerFunc(t.Logf)
 	textHeaderParser := proxyprotocol.NewTextHeaderParser(logger)
 	t.Run("buffer EOF", func(t *testing.T) {
-		data := []byte{}
+		var data []byte
 		testParser(t, testParserArgs{
 			headerParser: textHeaderParser,
 			data:         data,

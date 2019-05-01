@@ -33,7 +33,7 @@ var DefaultFallbackHeaderParserBuilder = NewFallbackHeaderParserBuilder(
 	StubHeaderParserBuilder,
 )
 
-// NewDefaultListener construct proxyprocol.Listener from other net.Listener
+// NewDefaultListener construct proxyprotocol.Listener from other net.Listener
 // with DefaultFallbackHeaderParserBuilder.
 func NewDefaultListener(listener net.Listener) Listener {
 	return NewListener(

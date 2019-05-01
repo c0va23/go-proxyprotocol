@@ -13,10 +13,11 @@ HA proxyprotocol.
 
 ## Usage example
 
-```golang
+```go
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -38,12 +39,13 @@ func main() {
 }
 ```
 
-DefaultListener try parse proxyprotocol v1 and v2 header. If header singature
+DefaultListener try parse proxyprotocol v1 and v2 header. If header signature
 not recognized, then used raw connection.
 
 If you want to use only proxy protocol V1 or v2 headers, you can initialize the
 listener as follows:
-```golang
+
+```go
 list := proxyprotocol.NewListener(rawList, proxyprotocol.TextHeaderParserBuilder)
 ```
 

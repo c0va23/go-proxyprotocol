@@ -1,12 +1,10 @@
-/*
-Package proxyprotocol implement receiver for HA ProxyProtocol V1 and V2.
-
-Prorxyprotocol spec http://www.haproxy.org/download/2.0/doc/proxy-protocol.txt
-
-This package provides a wrapper for the interface net.Listener, which extracts
-remote and local address of the connection from the headers in the format
-HA proxyprotocol.
-*/
+// Package proxyprotocol implement receiver for HA Proxy Protocol V1 and V2.
+//
+// Proxy Protocol spec http://www.haproxy.org/download/2.0/doc/proxy-protocol.txt
+//
+// This package provides a wrapper for the interface net.Listener, which extracts
+// remote and local address of the connection from the headers in the format
+// HA proxy protocol.
 package proxyprotocol
 
 import (
