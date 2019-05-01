@@ -5,6 +5,9 @@
   ]
 
 [linters-settings]
+  [linters-settings.govet]
+    check-shadowing = true
+
   [linters-settings.misspell]
     locale = "US"
 
