@@ -1,0 +1,16 @@
+[linters]
+  enable-all = true
+  disable = [
+      "gochecknoglobals",
+  ]
+
+[linters-settings]
+  [linters-settings.misspell]
+    locale = "US"
+
+[issues]
+  [[issues.exclude-rules]]
+    path = "mock_gen_test.go"
+    linters = [
+      "lll",
+    ]
